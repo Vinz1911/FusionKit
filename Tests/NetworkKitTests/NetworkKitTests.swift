@@ -31,7 +31,7 @@ final class NetworkKitTests: XCTestCase {
                 debugPrint("Data Count: \(datacount)")
             }
         }
-        connection.openConnection()
+        connection.start()
         wait(for: [exp], timeout: timeout)
     }
     
@@ -60,7 +60,7 @@ final class NetworkKitTests: XCTestCase {
                 debugPrint("Data Count: \(datacount)")
             }
         }
-        connection.openConnection()
+        connection.start()
         wait(for: [exp], timeout: timeout)
     }
 
@@ -100,7 +100,7 @@ final class NetworkKitTests: XCTestCase {
             default: break
             }
         }
-        connection.openConnection()
+        connection.start()
         wait(for: [exp], timeout: timeout)
     }
     
@@ -140,7 +140,7 @@ final class NetworkKitTests: XCTestCase {
             default: break
             }
         }
-        connection.openConnection()
+        connection.start()
         wait(for: [exp], timeout: timeout)
     }
 }

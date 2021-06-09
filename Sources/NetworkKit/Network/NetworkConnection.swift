@@ -31,17 +31,17 @@ public final class NetworkConnection: NetworkConnectionProtocol {
         self.qos = qos
     }
     
-    /// open a connection to a host
+    /// start a connection to a host
     /// creates a async tcp connection
-    public func openConnection() {
+    public func start() {
         prepareConnection()
         guard let connection = connection else { return }
-        connection.openConnection()
+        connection.start()
     }
     
-    /// close the connection
+    /// cancel the connection
     /// closes the tcp connection and cleanup
-    public func closeConnection() {
+    public func cancel() {
         cleanConnection()
     }
     
@@ -72,7 +72,7 @@ private extension NetworkConnection {
         guard let connection = connection else {
             return
         }
-        connection.closeConnection()
+        connection.cancel()
         self.connection = nil
     }
 

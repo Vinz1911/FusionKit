@@ -32,19 +32,19 @@ internal final class NetworkConnectionHandler: NetworkConnectionHandlerProtocol 
         self.queue = DispatchQueue(label: UUID().uuidString, qos: qos)
     }
     
-    /// open a connection to a host
+    /// start a connection to a host
     /// creates a async tcp connection
-    internal func openConnection() {
+    internal func start() {
         guard let connection = connection else { return }
         stateHandler()
-        receiveMessages()
+        receive()
         connection.start(queue: queue)
     }
     
-    /// close the connection
+    /// cancel the connection
     /// closes the tcp connection and cleanup
-    internal func closeConnection() {
-        cleanConnection()
+    internal func cancel() {
+        cleanup()
     }
 
     /// send messages to a host
@@ -81,7 +81,7 @@ private extension NetworkConnectionHandler {
     
     /// clean and cancel connection
     /// clear instance
-    private func cleanConnection() {
+    private func cleanup() {
         guard let connection = connection else { return }
         connection.cancel()
         self.connection = nil
@@ -97,7 +97,7 @@ private extension NetworkConnectionHandler {
             case .ready: self.state(.didGetReady)
             case .failed(let error):
                 self.state(.didGetError(error))
-                self.cleanConnection()
+                self.cleanup()
             case .cancelled: self.state(.didGetCancelled)
             default: break
             }
@@ -106,21 +106,21 @@ private extension NetworkConnectionHandler {
     
     /// receive message frames
     /// handles traffic input
-    private func receiveMessages() {
+    private func receive() {
         guard let connection = connection else { return }
         connection.receive(minimumIncompleteLength: overheadByteCount, maximumLength: frameByteCount) { [weak self] data, _, isComplete, error in
             guard let self = self else { return }
             if let error = error {
                 guard error != NWError.posix(.ECANCELED) else { return }
                 self.state(.didGetError(error))
-                self.cleanConnection()
+                self.cleanup()
                 return
             }
             if let data = data {
                 self.state(.didGetData(data))
                 self.state(.didGetBytes(NetworkBytes(input: data.count)))
             }
-            if isComplete { self.cleanConnection() } else { self.receiveMessages() }
+            if isComplete { self.cleanup() } else { self.receive() }
         }
     }
 }

@@ -20,13 +20,13 @@ internal protocol NetworkConnectionHandlerProtocol {
     ///   - qos: dispatch qos, default is background
     init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
     
-    /// open a connection to a host
+    /// start a connection to a host
     /// creates a async tcp connection
-    func openConnection()
+    func start()
 
-    /// close the connection
+    /// cancel the connection
     /// closes the tcp connection and cleanup
-    func closeConnection()
+    func cancel()
 
     /// send messages to a host
     /// send raw data
