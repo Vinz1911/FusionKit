@@ -10,11 +10,11 @@ final class NetworkKitTests: XCTestCase {
         let exp = expectation(description: "Wait for test to finish")
         let buffer = "50000"
         var datacount = 0
-        let socket = NetworkConnection(host: host, port: port)
-        socket.state = { state in
+        let connection = NetworkConnection(host: host, port: port)
+        connection.state = { state in
             switch state {
             case .didGetReady:
-                socket.send(message: buffer)
+                connection.send(message: buffer)
             case .didGetCancelled:
                 debugPrint("connection closed")
             case .didGetError(let error):
@@ -31,7 +31,7 @@ final class NetworkKitTests: XCTestCase {
                 debugPrint("Data Count: \(datacount)")
             }
         }
-        socket.openConnection()
+        connection.openConnection()
         wait(for: [exp], timeout: timeout)
     }
     
@@ -39,11 +39,11 @@ final class NetworkKitTests: XCTestCase {
         let exp = expectation(description: "Wait for test to finish")
         let buffer = Data(count: 50000)
         var datacount = 0
-        let socket = NetworkConnection(host: host, port: port)
-        socket.state = { state in
+        let connection = NetworkConnection(host: host, port: port)
+        connection.state = { state in
             switch state {
             case .didGetReady:
-                socket.send(message: buffer)
+                connection.send(message: buffer)
             case .didGetCancelled:
                 debugPrint("connection closed")
             case .didGetError(let error):
@@ -60,7 +60,7 @@ final class NetworkKitTests: XCTestCase {
                 debugPrint("Data Count: \(datacount)")
             }
         }
-        socket.openConnection()
+        connection.openConnection()
         wait(for: [exp], timeout: timeout)
     }
 
@@ -70,12 +70,12 @@ final class NetworkKitTests: XCTestCase {
         var messages = 0
         let sendValue = 100
         var index = 0
-        let socket = NetworkConnection(host: host, port: port)
-        socket.state = { state in
+        let connection = NetworkConnection(host: host, port: port)
+        connection.state = { state in
             switch state {
             case .didGetReady:
                 func send() {
-                    socket.send(message: buffer) {
+                    connection.send(message: buffer) {
                         if index != sendValue {
                             send()
                         }
@@ -100,7 +100,7 @@ final class NetworkKitTests: XCTestCase {
             default: break
             }
         }
-        socket.openConnection()
+        connection.openConnection()
         wait(for: [exp], timeout: timeout)
     }
     
@@ -110,12 +110,12 @@ final class NetworkKitTests: XCTestCase {
         var messages = 0
         let sendValue = 1000
         var index = 0
-        let socket = NetworkConnection(host: host, port: port)
-        socket.state = { state in
+        let connection = NetworkConnection(host: host, port: port)
+        connection.state = { state in
             switch state {
             case .didGetReady:
                 func send() {
-                    socket.send(message: buffer) {
+                    connection.send(message: buffer) {
                         if index != sendValue {
                             send()
                         }
@@ -140,7 +140,7 @@ final class NetworkKitTests: XCTestCase {
             default: break
             }
         }
-        socket.openConnection()
+        connection.openConnection()
         wait(for: [exp], timeout: timeout)
     }
 }

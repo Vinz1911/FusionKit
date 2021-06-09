@@ -1,6 +1,6 @@
 //
 //  Extensions.swift
-//  FastSocketKit
+//  NetworkKit
 //
 //  Created by Vinzenz Weist on 10.03.20.
 //  Copyright © 2019 Vinzenz Weist. All rights reserved.

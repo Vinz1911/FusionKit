@@ -1,6 +1,5 @@
 //
 //  ClientConnectionProtocol.swift
-//
 //  NetworkKit
 //
 //  Created by Vinzenz Weist on 02.04.19.

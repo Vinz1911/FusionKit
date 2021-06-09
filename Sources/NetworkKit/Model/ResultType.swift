@@ -1,6 +1,6 @@
 //
 //  ResultType.swift
-//  FastSocketKit
+//  NetworkKit
 //
 //  Created by Vinzenz Weist on 09.06.21.
 //
@@ -13,7 +13,7 @@ public struct NetworkBytes {
     public var output: Int?
 }
 
-/// NetworkKit result type
+/// network connection result type
 public enum NetworkConnectionResult {
     case didGetReady
     case didGetCancelled
@@ -22,7 +22,7 @@ public enum NetworkConnectionResult {
     case didGetBytes(NetworkBytes)
 }
 
-/// peer connection result type
+/// peer connection handler result type
 internal enum NetworkConnectionHandlerResult {
     case didGetReady
     case didGetCancelled

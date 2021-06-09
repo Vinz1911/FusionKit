@@ -89,12 +89,12 @@ private extension NetworkConnection {
             return
         }
         connection = NetworkConnectionHandler(host: host, port: port, parameters: parameters, qos: qos)
-        peerConnectionHandle()
+        connectionHandler()
     }
     
-    /// handle the peer connection results
+    /// handle the network connection results
     /// parse raw data in 'Message' conform data
-    private func peerConnectionHandle() {
+    private func connectionHandler() {
         guard let connection = connection else { return }
         connection.state = { state in
             switch state {

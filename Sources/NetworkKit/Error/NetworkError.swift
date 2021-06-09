@@ -7,7 +7,7 @@
 //
 import Foundation
 
-/// main class specific errors
+/// network connection specific errors
 public enum NetworkConnectionError: Error {
     case missingHost
     case missingPort
@@ -22,7 +22,7 @@ public enum NetworkConnectionError: Error {
     }
 }
 
-/// peer frame speicific errors
+/// network frame specific errors
 public enum NetworkFrameError: Error {
     case parsingFailed
     case emptyBuffer
