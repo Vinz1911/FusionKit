@@ -1,8 +1,6 @@
 <div align="center">
     <h1>
         <br>
-            <a href="https://github.com/Vinz1911/FastSocket"><img src="https://github.com/Vinz1911/FastSocket/blob/master/.fastsocket.svg" alt="FastSocket" width="600"></a>
-        <br>
             NetworkKit
         <br>
     </h1>
