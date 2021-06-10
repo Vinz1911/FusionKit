@@ -1,5 +1,5 @@
 //
-//  Opcodes.swift
+//  NetworkOpcodes.swift
 //  NetworkKit
 //
 //  Created by Vinzenz Weist on 07.06.21.

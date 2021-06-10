@@ -14,13 +14,13 @@ public protocol NetworkMessage {
     var raw: Data { get }
 }
 
-/// conformance to protocol 'Message'
+/// conformance to protocol 'NetworkMessage'
 extension String: NetworkMessage {
     public var opcode: UInt8 { NetworkOpcodes.text.rawValue }
     public var raw: Data { Data(self.utf8) }
 }
 
-/// conformance to protocol 'Message'
+/// conformance to protocol 'NetworkMessage'
 extension Data: NetworkMessage {
     public var opcode: UInt8 { NetworkOpcodes.binary.rawValue }
     public var raw: Data { self }

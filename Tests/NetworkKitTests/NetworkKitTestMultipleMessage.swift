@@ -53,7 +53,7 @@ class NetworkKitTestMultiMessage: XCTestCase {
 private extension NetworkKitTestMultiMessage {
     
     /// sends specific amount of messages
-    /// - Parameter message: conforms to 'Data' & 'String'
+    /// - Parameter message: conforms to 'Data' and 'String'
     private func sendMessages<T: NetworkMessage>(message: T) {
         self.connection.send(message: message) { [weak self] in
             guard let self = self else { return }
@@ -67,7 +67,7 @@ private extension NetworkKitTestMultiMessage {
     private func stateUpdateHandler(connection: NetworkConnection) {
         connection.stateUpdateHandler = { state in
             switch state {
-            case .didGetReady:
+            case .ready:
                 if self.cases == .string {
                     guard self.index < self.sendCount else { return }
                     self.sendMessages(message: self.buffer)
@@ -78,7 +78,7 @@ private extension NetworkKitTestMultiMessage {
                     self.sendMessages(message: Data(count: Int(self.buffer)!))
                 }
                 
-            case .didGetMessage(_):
+            case .message(_):
                 if self.receiveCount == self.sendCount {
                     XCTAssertEqual(self.receiveCount, self.sendCount)
                     connection.cancel()
@@ -86,7 +86,7 @@ private extension NetworkKitTestMultiMessage {
                 }
                 self.receiveCount += 1
                 
-            case .didGetError(let error):
+            case .failed(let error):
                 guard let error = error else { return }
                 XCTFail("failed with error: \(error)")
     

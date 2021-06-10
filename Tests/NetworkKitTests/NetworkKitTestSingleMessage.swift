@@ -54,11 +54,11 @@ private extension NetworkKitTestSingleMessage {
     private func stateUpdateHandler(connection: NetworkConnection) {
         connection.stateUpdateHandler = { state in
             switch state {
-            case .didGetReady:
+            case .ready:
                 if self.cases == .string { connection.send(message: self.buffer) }
                 if self.cases == .data { connection.send(message: Data(count: Int(self.buffer)!)) }
                 
-            case .didGetMessage(let message):
+            case .message(let message):
                 if case let message as Data = message {
                     XCTAssertEqual(message.count, Int(self.buffer))
                     connection.cancel()
@@ -70,7 +70,7 @@ private extension NetworkKitTestSingleMessage {
                     self.exp?.fulfill()
                 }
                 
-            case .didGetError(let error):
+            case .failed(let error):
                 guard let error = error else { return }
                 XCTFail("failed with error: \(error)")
 
