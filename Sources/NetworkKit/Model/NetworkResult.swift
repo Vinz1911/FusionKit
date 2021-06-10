@@ -1,5 +1,5 @@
 //
-//  ResultType.swift
+//  NetworkResult.swift
 //  NetworkKit
 //
 //  Created by Vinzenz Weist on 09.06.21.
