@@ -53,7 +53,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     
     /// send messages to a connected host
     /// - Parameters:
-    ///   - message: generic type, accepts 'String' & 'Data'
+    ///   - message: generic type, accepts 'String' and 'Data'
     ///   - completion: callback when sending is completed
     public func send<T: NetworkMessage>(message: T, _ completion: (() -> Void)? = nil) {
         let result = frame.create(message: message)

@@ -53,7 +53,7 @@ class NetworkKitTestMultiMessage: XCTestCase {
 private extension NetworkKitTestMultiMessage {
     
     /// sends specific amount of messages
-    /// - Parameter message: conforms to 'Data' & 'String'
+    /// - Parameter message: conforms to 'Data' and 'String'
     private func sendMessages<T: NetworkMessage>(message: T) {
         self.connection.send(message: message) { [weak self] in
             guard let self = self else { return }

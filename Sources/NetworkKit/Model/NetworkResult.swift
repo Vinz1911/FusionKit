@@ -7,7 +7,7 @@
 
 import Foundation
 
-/// result type for input & output bytes
+/// result type for input and output bytes
 public struct NetworkBytes {
     public var input: Int?
     public var output: Int?
