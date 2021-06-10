@@ -9,7 +9,7 @@
 import Foundation
 
 internal final class NetworkFrame {
-    
+
     private var buffer: Data
     private let overheadByteCount: Int = Int(0x5)
     private let frameByteCount: Int = Int(UInt32.max)
