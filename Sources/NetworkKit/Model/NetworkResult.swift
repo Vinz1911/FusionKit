@@ -21,12 +21,3 @@ public enum NetworkConnectionResult {
     case didGetMessage(NetworkMessage)
     case didGetBytes(NetworkBytes)
 }
-
-/// peer connection handler result type
-internal enum NetworkConnectionHandlerResult {
-    case didGetReady
-    case didGetCancelled
-    case didGetError(Error?)
-    case didGetData(Data)
-    case didGetBytes(NetworkBytes)
-}

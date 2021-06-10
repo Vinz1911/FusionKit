@@ -11,7 +11,7 @@ final class NetworkKitTests: XCTestCase {
         let buffer = "50000"
         var datacount = 0
         let connection = NetworkConnection(host: host, port: port)
-        connection.state = { state in
+        connection.stateUpdateHandler = { state in
             switch state {
             case .didGetReady:
                 connection.send(message: buffer)
@@ -40,7 +40,7 @@ final class NetworkKitTests: XCTestCase {
         let buffer = Data(count: 50000)
         var datacount = 0
         let connection = NetworkConnection(host: host, port: port)
-        connection.state = { state in
+        connection.stateUpdateHandler = { state in
             switch state {
             case .didGetReady:
                 connection.send(message: buffer)
@@ -71,7 +71,7 @@ final class NetworkKitTests: XCTestCase {
         let sendValue = 100
         var index = 0
         let connection = NetworkConnection(host: host, port: port)
-        connection.state = { state in
+        connection.stateUpdateHandler = { state in
             switch state {
             case .didGetReady:
                 func send() {
@@ -111,7 +111,7 @@ final class NetworkKitTests: XCTestCase {
         let sendValue = 1000
         var index = 0
         let connection = NetworkConnection(host: host, port: port)
-        connection.state = { state in
+        connection.stateUpdateHandler = { state in
             switch state {
             case .didGetReady:
                 func send() {

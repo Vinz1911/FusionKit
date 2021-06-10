@@ -11,15 +11,15 @@ import Network
 
 public protocol NetworkConnectionProtocol {
     
-    var state: (NetworkConnectionResult) -> Void { get set }
-    var parameters: NWParameters { get set }
+    /// result type
+    var stateUpdateHandler: (NetworkConnectionResult) -> Void { get set }
     
     /// create a new connection with 'NetworkKit'
     /// - Parameters:
     ///   - host: the host to connect
     ///   - port: the port of the host
     ///   - qos: qos class, default is background
-    init(host: String, port: UInt16, qos: DispatchQoS)
+    init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
     
     /// start a connection to a host
     /// creates a async tcp connection

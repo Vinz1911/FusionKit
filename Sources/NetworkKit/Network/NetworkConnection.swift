@@ -1,5 +1,5 @@
 //
-//  NetworkConnection.swift
+//  Connection.swift
 //  NetworkKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
@@ -11,38 +11,44 @@ import Network
 
 public final class NetworkConnection: NetworkConnectionProtocol {
     
-    public var state: (NetworkConnectionResult) -> Void = { _ in }
-    public var parameters: NWParameters = .tcp
+    /// result type
+    public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
     
-    private var host: String
-    private var port: UInt16
-    private var qos: DispatchQoS
-    private var frame: NetworkFrame = NetworkFrame()
-    private var connection: NetworkConnectionHandler?
+    private let overheadByteCount: Int = 0x5
+    private let frameByteCount: Int = 0x2000
     
-    /// create a new connection with 'NetworkKit'
+    private var connection: NWConnection?
+    private let frame: NetworkFrame = NetworkFrame()
+    private var queue: DispatchQueue
+    private var processed: Bool = true
+    
+    /// create instance of the 'ClientConnection' class
+    /// this class handles raw tcp connection
     /// - Parameters:
-    ///   - host: the host to connect
-    ///   - port: the port of the host
-    ///   - qos: qos class, default is background
-    public required init(host: String, port: UInt16, qos: DispatchQoS = .background) {
-        self.host = host
-        self.port = port
-        self.qos = qos
+    ///   - host: the host name
+    ///   - port: the host port
+    ///   - parameters: network parameters
+    ///   - qos: dispatch qos, default is background
+    required public init(host: String, port: UInt16, parameters: NWParameters = .tcp, qos: DispatchQoS = .background) {
+        if host.isEmpty { fatalError(NetworkConnectionError.missingHost.description) }
+        if port == .zero { fatalError(NetworkConnectionError.missingPort.description) }
+        connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
+        self.queue = DispatchQueue(label: UUID().uuidString, qos: qos)
     }
     
     /// start a connection to a host
     /// creates a async tcp connection
     public func start() {
-        prepareConnection()
         guard let connection = connection else { return }
-        connection.start()
+        stateHandler()
+        receive()
+        connection.start(queue: queue)
     }
     
     /// cancel the connection
     /// closes the tcp connection and cleanup
     public func cancel() {
-        cleanConnection()
+        cleanup()
     }
     
     /// send messages to a connected host
@@ -50,12 +56,13 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     ///   - message: generic type, accepts 'String' & 'Data'
     ///   - completion: callback when sending is completed
     public func send<T: NetworkMessage>(message: T, _ completion: (() -> Void)? = nil) {
-        guard let connection = connection else { return }
-        let data = self.frame.create(message: message) { error in
-            state(.didGetError(error))
-            cleanConnection()
+        let result = frame.create(message: message)
+        if let error = result.error {
+            stateUpdateHandler(.didGetError(error))
+            cleanup()
         }
-        connection.send(data: data) {
+        guard let data = result.data else { return }
+        processingMessage(data: data) {
             guard let completion = completion else { return }
             completion()
         }
@@ -66,53 +73,81 @@ public final class NetworkConnection: NetworkConnectionProtocol {
 
 private extension NetworkConnection {
     
-    /// clean up the connection
-    /// reset the instance
-    private func cleanConnection() {
-        guard let connection = connection else {
-            return
+    /// process message data and send it to a host
+    /// - Parameters:
+    ///   - data: message data
+    ///   - completion: callback on complete
+    private func processingMessage(data: Data, _ completion: @escaping () -> Void) {
+        guard let connection = connection else { return }
+        guard processed else { return }
+        processed = false
+        let queued = data.chunk
+        guard !queued.isEmpty else { return }
+        for (i, data) in queued.enumerated() {
+            connection.send(content: data, completion: .contentProcessed({ error in
+                if let error = error {
+                    guard error != NWError.posix(.ECANCELED) else { return }
+                    self.stateUpdateHandler(.didGetError(error))
+                    return
+                }
+                self.stateUpdateHandler(.didGetBytes(NetworkBytes(output: data.count)))
+                if i == queued.endIndex - 1 {
+                    self.processed = true
+                    completion()
+                }
+            }))
         }
+    }
+    
+    /// clean and cancel connection
+    /// clear instance
+    private func cleanup() {
+        guard let connection = connection else { return }
         connection.cancel()
         self.connection = nil
     }
-
-    /// prepare the client connection
-    /// check if host and port are correct
-    /// starts to listen on callback
-    private func prepareConnection() {
-        guard !host.isEmpty else {
-            state(.didGetError(NetworkConnectionError.missingHost))
-            return
+    
+    /// connection state handler
+    /// handles different network connection states
+    private func stateHandler() {
+        guard let connection = connection else { return }
+        connection.stateUpdateHandler = { [weak self] state in
+            guard let self = self else { return }
+            switch state {
+            case .ready: self.stateUpdateHandler(.didGetReady)
+            case .failed(let error):
+                self.stateUpdateHandler(.didGetError(error))
+                self.cleanup()
+            case .cancelled: self.stateUpdateHandler(.didGetCancelled)
+            default: break
+            }
         }
-        guard port != .zero else {
-            state(.didGetError(NetworkConnectionError.missingPort))
-            return
-        }
-        connection = NetworkConnectionHandler(host: host, port: port, parameters: parameters, qos: qos)
-        connectionHandler()
     }
     
-    /// handle the network connection results
-    /// parse raw data in 'Message' conform data
-    private func connectionHandler() {
+    /// receive pure data frames
+    /// handles traffic input
+    private func receive() {
         guard let connection = connection else { return }
-        connection.state = { state in
-            switch state {
-            case .didGetReady: self.state(.didGetReady)
-            case .didGetCancelled: self.state(.didGetCancelled)
-            case .didGetError(let error):
-                self.state(.didGetError(error))
-                self.cleanConnection()
-            case .didGetBytes(let bytes): self.state(.didGetBytes(bytes))
-            case .didGetData(let data):
-                self.frame.parse(data: data) { message, error in
-                    if let error = error {
-                        self.state(.didGetError(error))
-                        self.cleanConnection()
-                    }
-                    if let message = message { self.state(.didGetMessage(message)) }
+        connection.receive(minimumIncompleteLength: overheadByteCount, maximumLength: frameByteCount) { [weak self] data, _, isComplete, error in
+            guard let self = self else { return }
+            if let error = error {
+                guard error != NWError.posix(.ECANCELED) else { return }
+                self.stateUpdateHandler(.didGetError(error))
+                self.cleanup()
+                return
+            }
+            if let data = data {
+                self.stateUpdateHandler(.didGetBytes(NetworkBytes(input: data.count)))
+                let error = self.frame.parse(data: data) { message in
+                    guard let message = message else { return }
+                    self.stateUpdateHandler(.didGetMessage(message))
+                }
+                if let error = error {
+                    self.stateUpdateHandler(.didGetError(error))
+                    self.cleanup()
                 }
             }
+            if isComplete { self.cleanup() } else { self.receive() }
         }
     }
 }
