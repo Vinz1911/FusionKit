@@ -58,7 +58,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     public func send<T: NetworkMessage>(message: T, _ completion: (() -> Void)? = nil) {
         let result = frame.create(message: message)
         if let error = result.error {
-            stateUpdateHandler(.didGetError(error))
+            stateUpdateHandler(.failed(error))
             cleanup()
         }
         guard let data = result.data else { return }
@@ -87,10 +87,10 @@ private extension NetworkConnection {
             connection.send(content: data, completion: .contentProcessed({ error in
                 if let error = error {
                     guard error != NWError.posix(.ECANCELED) else { return }
-                    self.stateUpdateHandler(.didGetError(error))
+                    self.stateUpdateHandler(.failed(error))
                     return
                 }
-                self.stateUpdateHandler(.didGetBytes(NetworkBytes(output: data.count)))
+                self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
                 if i == queued.endIndex - 1 {
                     self.processed = true
                     completion()
@@ -114,11 +114,11 @@ private extension NetworkConnection {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             switch state {
-            case .ready: self.stateUpdateHandler(.didGetReady)
+            case .ready: self.stateUpdateHandler(.ready)
             case .failed(let error):
-                self.stateUpdateHandler(.didGetError(error))
+                self.stateUpdateHandler(.failed(error))
                 self.cleanup()
-            case .cancelled: self.stateUpdateHandler(.didGetCancelled)
+            case .cancelled: self.stateUpdateHandler(.cancelled)
             default: break
             }
         }
@@ -132,18 +132,18 @@ private extension NetworkConnection {
             guard let self = self else { return }
             if let error = error {
                 guard error != NWError.posix(.ECANCELED) else { return }
-                self.stateUpdateHandler(.didGetError(error))
+                self.stateUpdateHandler(.failed(error))
                 self.cleanup()
                 return
             }
             if let data = data {
-                self.stateUpdateHandler(.didGetBytes(NetworkBytes(input: data.count)))
+                self.stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
                 let error = self.frame.parse(data: data) { message in
                     guard let message = message else { return }
-                    self.stateUpdateHandler(.didGetMessage(message))
+                    self.stateUpdateHandler(.message(message))
                 }
                 if let error = error {
-                    self.stateUpdateHandler(.didGetError(error))
+                    self.stateUpdateHandler(.failed(error))
                     self.cleanup()
                 }
             }

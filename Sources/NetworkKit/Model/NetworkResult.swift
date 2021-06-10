@@ -15,9 +15,9 @@ public struct NetworkBytes {
 
 /// network connection result type
 public enum NetworkConnectionResult {
-    case didGetReady
-    case didGetCancelled
-    case didGetError(Error?)
-    case didGetMessage(NetworkMessage)
-    case didGetBytes(NetworkBytes)
+    case ready
+    case cancelled
+    case failed(Error?)
+    case message(NetworkMessage)
+    case bytes(NetworkBytes)
 }
