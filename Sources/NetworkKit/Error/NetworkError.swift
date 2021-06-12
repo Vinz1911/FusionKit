@@ -13,7 +13,7 @@ public enum NetworkConnectionError: Error {
     case missingPort
     case connectionTimeout
     
-    var description: String {
+    public var description: String {
         switch self {
         case .missingHost: return "missing host"
         case .missingPort: return "missing port"
@@ -29,7 +29,7 @@ public enum NetworkFrameError: Error {
     case readBufferOverflow
     case writeBufferOverflow
     
-    var description: String {
+    public var description: String {
         switch self {
         case .parsingFailed: return "message parsing failed"
         case .emptyBuffer: return "unexpected empty buffer"
