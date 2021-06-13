@@ -53,7 +53,7 @@ internal final class NetworkFrame: NetworkFrameProtocol {
                 guard let message = extractMessage(data: buffer) else { return NetworkFrameError.parsingFailed }
                 completion(message)
             }
-            if buffer.count <= messageSize { buffer = Data() } else { buffer = Data(buffer[messageSize...]) }
+            buffer = Data(buffer[messageSize...])
         }
         return nil
     }
