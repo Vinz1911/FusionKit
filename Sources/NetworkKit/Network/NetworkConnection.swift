@@ -62,7 +62,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
             cleanup()
         }
         guard let data = result.data else { return }
-        processMessage(data: data) {
+        processingMessage(data: data) {
             guard let completion = completion else { return }
             completion()
         }
@@ -72,19 +72,6 @@ public final class NetworkConnection: NetworkConnectionProtocol {
 // MARK: - Private API Extension
 
 private extension NetworkConnection {
-    
-    private func processMessage(data: Data, _ completion: @escaping () -> Void) {
-        guard let connection = connection else { return }
-        connection.send(content: data, completion: .contentProcessed({ error in
-            if let error = error {
-                guard error != NWError.posix(.ECANCELED) else { return }
-                self.stateUpdateHandler(.failed(error))
-                return
-            }
-            self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
-            completion()
-        }))
-    }
     
     /// process message data and send it to a host
     /// - Parameters:
