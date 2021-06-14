@@ -21,8 +21,8 @@ internal final class NetworkFrame: NetworkFrameProtocol {
     
     /// create compliant message conform to 'NetworkMessage' protocol
     /// - Parameters:
-    ///     - message: generic type conforms to 'Data' and 'String'
-    ///     - completion: completion block, returns error
+    ///   - message: generic type conforms to 'Data' and 'String'
+    ///   - completion: completion block, returns error
     /// - Returns: message data frame
     internal func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?) {
         var frame = Data()
@@ -35,8 +35,8 @@ internal final class NetworkFrame: NetworkFrameProtocol {
     
     /// parse a protocol conform message frame
     /// - Parameters:
-    ///     - data: the data which should be parsed
-    ///     - completion: completion block returns parsed message
+    ///   - data: the data which should be parsed
+    ///   - completion: completion block returns parsed message
     /// - Returns: optional error
     internal func parse(data: Data, _ completion: (NetworkMessage?) -> Void) -> Error? {
         buffer.append(data)
@@ -53,7 +53,7 @@ internal final class NetworkFrame: NetworkFrameProtocol {
                 guard let message = extractMessage(data: buffer) else { return NetworkFrameError.parsingFailed }
                 completion(message)
             }
-            buffer = Data(buffer[messageSize...])
+            if buffer.count <= messageSize { buffer = Data() } else { buffer = Data(buffer[messageSize...]) }
         }
         return nil
     }

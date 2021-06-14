@@ -11,14 +11,13 @@ import Network
 
 public final class NetworkConnection: NetworkConnectionProtocol {
     
-    /// result type
     public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
     
-    private let overheadByteCount: Int = 0x5
-    private let frameByteCount: Int = 0x2000
+    private let minimumIncompleteLength: Int = 0x1
+    private let maximumLength: Int = 0x2000
     
-    private var connection: NWConnection?
     private let frame: NetworkFrame = NetworkFrame()
+    private var connection: NWConnection?
     private var queue: DispatchQueue
     private var processed: Bool = true
     
@@ -128,7 +127,7 @@ private extension NetworkConnection {
     /// handles traffic input
     private func receive() {
         guard let connection = connection else { return }
-        connection.receive(minimumIncompleteLength: overheadByteCount, maximumLength: frameByteCount) { [weak self] data, _, isComplete, error in
+        connection.receive(minimumIncompleteLength: minimumIncompleteLength, maximumLength: maximumLength) { [weak self] data, _, isComplete, error in
             guard let self = self else { return }
             if let error = error {
                 guard error != NWError.posix(.ECANCELED) else { return }
