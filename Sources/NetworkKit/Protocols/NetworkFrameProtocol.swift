@@ -14,14 +14,14 @@ internal protocol NetworkFrameProtocol {
 
     /// create a protocol conform message frame
     /// - Parameters:
-    ///     - message: generic type which conforms to 'Data' and 'String'
+    ///   - message: generic type which conforms to 'Data' and 'String'
     /// - Returns: message frame as data and optional error
     func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?)
     
     /// parse a protocol conform message frame
     /// - Parameters:
-    ///     - data: the data which should be parsed
-    ///     - completion: completion block returns parsed message
+    ///   - data: the data which should be parsed
+    ///   - completion: completion block returns parsed message
     /// - Returns: optional error
     func parse(data: Data, _ completion: (NetworkMessage?) -> Void) -> Error?
 }
