@@ -38,24 +38,23 @@ internal final class NetworkFrame: NetworkFrameProtocol {
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
     /// - Returns: optional error
-    internal func parse(data: Data, _ completion: (NetworkMessage?) -> Void) -> Error? {
+    internal func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
         buffer.append(data)
-        guard let messageSize = extractMessageSize() else { return nil }
-        guard buffer.count <= frameByteCount else { return NetworkFrameError.readBufferOverflow }
-        guard buffer.count >= overheadByteCount, buffer.count >= messageSize else { return nil }
+        guard let messageSize = extractMessageSize() else { return }
+        guard buffer.count <= frameByteCount else { completion(nil, NetworkFrameError.readBufferOverflow); return }
+        guard buffer.count >= overheadByteCount, buffer.count >= messageSize else { return }
         while buffer.count >= messageSize && messageSize != .zero {
             if buffer.first == NetworkOpcodes.text.rawValue {
-                guard let bytes = extractMessage(data: buffer) else { return NetworkFrameError.parsingFailed }
-                guard let message = String(bytes: bytes, encoding: .utf8) else { return NetworkFrameError.parsingFailed  }
-                completion(message)
+                guard let bytes = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
+                guard let message = String(bytes: bytes, encoding: .utf8) else { completion(nil, NetworkFrameError.parsingFailed); return }
+                completion(message, nil)
             }
             if buffer.first == NetworkOpcodes.binary.rawValue {
-                guard let message = extractMessage(data: buffer) else { return NetworkFrameError.parsingFailed }
-                completion(message)
+                guard let message = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
+                completion(message, nil)
             }
             if buffer.count <= messageSize { buffer = Data() } else { buffer = Data(buffer[messageSize...]) }
         }
-        return nil
     }
 }
 

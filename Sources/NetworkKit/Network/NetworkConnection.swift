@@ -61,7 +61,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
             cleanup()
         }
         guard let data = result.data else { return }
-        processingMessage(data: data) {
+        processingSendMessage(data: data) {
             guard let completion = completion else { return }
             completion()
         }
@@ -76,7 +76,7 @@ private extension NetworkConnection {
     /// - Parameters:
     ///   - data: message data
     ///   - completion: callback on complete
-    private func processingMessage(data: Data, _ completion: @escaping () -> Void) {
+    private func processingSendMessage(data: Data, _ completion: @escaping () -> Void) {
         guard let connection = connection else { return }
         guard processed else { return }
         processed = false
@@ -98,6 +98,19 @@ private extension NetworkConnection {
         }
     }
     
+    /// process message data and parse it into a conform message
+    /// - Parameter data: message data
+    private func processingParseMessage(data: Data) {
+        self.frame.parse(data: data) { message, error in
+            if let message = message { self.stateUpdateHandler(.message(message)) }
+            if let error = error {
+                self.stateUpdateHandler(.failed(error))
+                self.cleanup()
+            }
+        }
+        self.stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
+    }
+    
     /// clean and cancel connection
     /// clear instance
     private func cleanup() {
@@ -114,10 +127,10 @@ private extension NetworkConnection {
             guard let self = self else { return }
             switch state {
             case .ready: self.stateUpdateHandler(.ready)
-            case .failed(let error):
+            case .cancelled: self.stateUpdateHandler(.cancelled)
+            case .failed(let error), .waiting(let error):
                 self.stateUpdateHandler(.failed(error))
                 self.cleanup()
-            case .cancelled: self.stateUpdateHandler(.cancelled)
             default: break
             }
         }
@@ -135,17 +148,7 @@ private extension NetworkConnection {
                 self.cleanup()
                 return
             }
-            if let data = data {
-                self.stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
-                let error = self.frame.parse(data: data) { message in
-                    guard let message = message else { return }
-                    self.stateUpdateHandler(.message(message))
-                }
-                if let error = error {
-                    self.stateUpdateHandler(.failed(error))
-                    self.cleanup()
-                }
-            }
+            if let data = data { self.processingParseMessage(data: data) }
             if isComplete { self.cleanup() } else { self.receive() }
         }
     }
