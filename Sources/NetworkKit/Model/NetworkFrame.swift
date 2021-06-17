@@ -8,17 +8,12 @@
 
 import Foundation
 
-internal final class NetworkFrame: NetworkFrameProtocol {
+internal struct NetworkFrame: NetworkFrameProtocol {
 
-    private var buffer: Data
+    private var buffer: Data = Data()
     private let overheadByteCount: Int = Int(0x5)
     private let frameByteCount: Int = Int(UInt32.max)
-    
-    /// create instance of NetworkFrame
-    internal required init() {
-        self.buffer = Data()
-    }
-    
+
     /// create compliant message conform to 'NetworkMessage' protocol
     /// - Parameters:
     ///   - message: generic type conforms to 'Data' and 'String'
@@ -38,7 +33,7 @@ internal final class NetworkFrame: NetworkFrameProtocol {
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
     /// - Returns: optional error
-    internal func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
+    internal mutating func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
         buffer.append(data)
         guard let messageSize = extractMessageSize() else { return }
         guard buffer.count <= frameByteCount else { completion(nil, NetworkFrameError.readBufferOverflow); return }

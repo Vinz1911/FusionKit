@@ -16,7 +16,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     private let minimumIncompleteLength: Int = 0x1
     private let maximumLength: Int = 0x2000
     
-    private let frame: NetworkFrame = NetworkFrame()
+    private var frame: NetworkFrame = NetworkFrame()
     private var connection: NWConnection?
     private var queue: DispatchQueue
     private var processed: Bool = true
