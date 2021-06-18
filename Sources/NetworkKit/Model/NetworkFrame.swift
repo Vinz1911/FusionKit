@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal struct NetworkFrame: NetworkFrameProtocol {
+internal class NetworkFrame: NetworkFrameProtocol {
 
     private var buffer: Data = Data()
     private let overheadByteCount: Int = Int(0x5)
@@ -19,7 +19,7 @@ internal struct NetworkFrame: NetworkFrameProtocol {
     ///   - message: generic type conforms to 'Data' and 'String'
     ///   - completion: completion block, returns error
     /// - Returns: message data frame
-    internal mutating func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?) {
+    internal func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?) {
         var frame = Data()
         frame.append(message.opcode)
         frame.append(UInt32(message.raw.count + overheadByteCount).data)
@@ -33,7 +33,7 @@ internal struct NetworkFrame: NetworkFrameProtocol {
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
     /// - Returns: optional error
-    internal mutating func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
+    internal func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
         buffer.append(data)
         guard let messageSize = extractMessageSize() else { return }
         guard buffer.count <= frameByteCount else { completion(nil, NetworkFrameError.readBufferOverflow); return }
