@@ -16,9 +16,9 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     private let minimumIncompleteLength: Int = 0x1
     private let maximumLength: Int = 0x2000
     
-    private var frame: NetworkFrame = NetworkFrame()
+    private let frame: NetworkFrame = NetworkFrame()
+    private let queue: DispatchQueue
     private var connection: NWConnection?
-    private var queue: DispatchQueue
     private var processed: Bool = true
     
     /// create instance of the 'ClientConnection' class
@@ -126,11 +126,11 @@ private extension NetworkConnection {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             switch state {
-            case .ready: self.stateUpdateHandler(.ready)
-            case .cancelled: self.stateUpdateHandler(.cancelled)
             case .failed(let error), .waiting(let error):
                 self.stateUpdateHandler(.failed(error))
                 self.cleanup()
+            case .ready: self.stateUpdateHandler(.ready)
+            case .cancelled: self.stateUpdateHandler(.cancelled)
             default: break
             }
         }
