@@ -14,7 +14,7 @@ internal protocol NetworkFrameProtocol {
     /// - Parameters:
     ///   - message: generic type which conforms to 'Data' and 'String'
     /// - Returns: message frame as data and optional error
-    func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?)
+    mutating func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?)
     
     /// parse a protocol conform message frame
     /// - Parameters:

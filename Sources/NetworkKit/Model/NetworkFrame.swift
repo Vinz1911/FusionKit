@@ -19,7 +19,7 @@ internal struct NetworkFrame: NetworkFrameProtocol {
     ///   - message: generic type conforms to 'Data' and 'String'
     ///   - completion: completion block, returns error
     /// - Returns: message data frame
-    internal func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?) {
+    internal mutating func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?) {
         var frame = Data()
         frame.append(message.opcode)
         frame.append(UInt32(message.raw.count + overheadByteCount).data)
