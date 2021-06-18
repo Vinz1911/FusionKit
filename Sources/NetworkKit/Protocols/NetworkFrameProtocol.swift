@@ -10,8 +10,6 @@ import Foundation
 
 internal protocol NetworkFrameProtocol {
     
-    init()
-
     /// create a protocol conform message frame
     /// - Parameters:
     ///   - message: generic type which conforms to 'Data' and 'String'
@@ -23,5 +21,5 @@ internal protocol NetworkFrameProtocol {
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
     /// - Returns: optional error
-    func parse(data: Data, _ completion: (NetworkMessage?) -> Void) -> Error?
+    func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void)
 }
