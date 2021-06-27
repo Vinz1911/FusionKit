@@ -20,6 +20,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     private let queue: DispatchQueue
     private var connection: NWConnection?
     private var processed: Bool = true
+    private var timer: DispatchSourceTimer?
     
     /// create instance of the 'ClientConnection' class
     /// this class handles raw tcp connection
@@ -40,7 +41,8 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     public func start() {
         guard let connection = connection else { return }
         stateHandler()
-        receive()
+        startTimeout()
+        receiveData()
         connection.start(queue: queue)
     }
     
@@ -71,6 +73,23 @@ public final class NetworkConnection: NetworkConnectionProtocol {
 // MARK: - Private API Extension
 
 private extension NetworkConnection {
+    
+    /// start timeout and cancel connection
+    /// if timeout value is reached
+    private func startTimeout() {
+        self.timer = Timer.timeout { [weak self] in
+            guard let self = self else { return }
+            self.cleanup()
+            self.stateUpdateHandler(.failed(NetworkConnectionError.connectionTimeout))
+        }
+    }
+    
+    /// cancel a running timeout
+    private func stopTimeout() {
+        guard let timer = self.timer else { return }
+        timer.cancel()
+        self.timer = nil
+    }
     
     /// process message data and send it to a host
     /// - Parameters:
@@ -129,7 +148,9 @@ private extension NetworkConnection {
             case .failed(let error), .waiting(let error):
                 self.stateUpdateHandler(.failed(error))
                 self.cleanup()
-            case .ready: self.stateUpdateHandler(.ready)
+            case .ready:
+                self.stateUpdateHandler(.ready)
+                self.stopTimeout()
             case .cancelled: self.stateUpdateHandler(.cancelled)
             default: break
             }
@@ -138,7 +159,7 @@ private extension NetworkConnection {
     
     /// receive pure data frames
     /// handles traffic input
-    private func receive() {
+    private func receiveData() {
         guard let connection = connection else { return }
         connection.receive(minimumIncompleteLength: minimumIncompleteLength, maximumLength: maximumLength) { [weak self] data, _, isComplete, error in
             guard let self = self else { return }
@@ -149,7 +170,7 @@ private extension NetworkConnection {
                 return
             }
             if let data = data { self.processingParseMessage(data: data) }
-            if isComplete { self.cleanup() } else { self.receive() }
+            if isComplete { self.cleanup() } else { self.receiveData() }
         }
     }
 }

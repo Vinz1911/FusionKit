@@ -8,6 +8,22 @@
 import Foundation
 import Network
 
+internal extension Timer {
+    
+    /// create a timeout
+    /// - Parameters:
+    ///   - after: executed after given time
+    ///   - completion: completion
+    /// - Returns: a source timer
+    static func timeout(after: TimeInterval = 3.0, _ completion: @escaping () -> Void) -> DispatchSourceTimer {
+        let dispatchTimer = DispatchSource.makeTimerSource(flags: .strict, queue: DispatchQueue(label: UUID().uuidString))
+        dispatchTimer.setEventHandler(handler: completion)
+        dispatchTimer.schedule(deadline: .now() + after, repeating: .never)
+        dispatchTimer.resume()
+        return dispatchTimer
+    }
+}
+
 internal extension UInt32 {
     /// convert integer to data with bigEndian
     var data: Data {
