@@ -18,8 +18,8 @@ public protocol NetworkConnectionProtocol {
     /// - Parameters:
     ///   - host: the host to connect
     ///   - port: the port of the host
-    ///   - qos: qos class, default is background
-    init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
+    ///   - queue: dispatch queue
+    init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
     
     /// start a connection to a host
     /// creates a async tcp connection

@@ -29,11 +29,11 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     ///   - port: the host port
     ///   - parameters: network parameters
     ///   - qos: dispatch qos, default is background
-    required public init(host: String, port: UInt16, parameters: NWParameters = .tcp, qos: DispatchQoS = .background) {
+    required public init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString)) {
         if host.isEmpty { fatalError(NetworkConnectionError.missingHost.description) }
         if port == .zero { fatalError(NetworkConnectionError.missingPort.description) }
-        connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
-        self.queue = DispatchQueue(label: UUID().uuidString, qos: qos)
+        self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
+        self.queue = queue
     }
     
     /// start a connection to a host
@@ -102,18 +102,20 @@ private extension NetworkConnection {
         let queued = data.chunk
         guard !queued.isEmpty else { return }
         for (i, data) in queued.enumerated() {
-            connection.send(content: data, completion: .contentProcessed({ error in
-                if let error = error {
-                    guard error != NWError.posix(.ECANCELED) else { return }
-                    self.stateUpdateHandler(.failed(error))
-                    return
-                }
-                self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
-                if i == queued.endIndex - 1 {
-                    self.processed = true
-                    completion()
-                }
-            }))
+            connection.batch {
+                connection.send(content: data, completion: .contentProcessed({ error in
+                    if let error = error {
+                        guard error != NWError.posix(.ECANCELED) else { return }
+                        self.stateUpdateHandler(.failed(error))
+                        return
+                    }
+                    self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
+                    if i == queued.endIndex - 1 {
+                        self.processed = true
+                        completion()
+                    }
+                }))
+            }
         }
     }
     
@@ -161,16 +163,18 @@ private extension NetworkConnection {
     /// handles traffic input
     private func receiveData() {
         guard let connection = connection else { return }
-        connection.receive(minimumIncompleteLength: minimumIncompleteLength, maximumLength: maximumLength) { [weak self] data, _, isComplete, error in
-            guard let self = self else { return }
-            if let error = error {
-                guard error != NWError.posix(.ECANCELED) else { return }
-                self.stateUpdateHandler(.failed(error))
-                self.cleanup()
-                return
+        connection.batch {
+            connection.receive(minimumIncompleteLength: minimumIncompleteLength, maximumLength: maximumLength) { [weak self] data, _, isComplete, error in
+                guard let self = self else { return }
+                if let error = error {
+                    guard error != NWError.posix(.ECANCELED) else { return }
+                    self.stateUpdateHandler(.failed(error))
+                    self.cleanup()
+                    return
+                }
+                if let data = data { self.processingParseMessage(data: data) }
+                if isComplete { self.cleanup() } else { self.receiveData() }
             }
-            if let data = data { self.processingParseMessage(data: data) }
-            if isComplete { self.cleanup() } else { self.receiveData() }
         }
     }
 }
