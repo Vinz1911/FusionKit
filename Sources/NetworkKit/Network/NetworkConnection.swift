@@ -13,12 +13,9 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     
     public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
     
-    private let minimumIncompleteLength: Int = 0x1
-    private let maximumLength: Int = 0x2000
-    
     private let frame: NetworkFrame = NetworkFrame()
     private let queue: DispatchQueue
-    private var connection: NWConnection?
+    private var connection: NWConnection
     private var processed: Bool = true
     private var timer: DispatchSourceTimer?
     
@@ -39,10 +36,9 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// start a connection to a host
     /// creates a async tcp connection
     public func start() {
-        guard let connection = connection else { return }
         stateHandler()
         startTimeout()
-        receiveData()
+        receiveMessage()
         connection.start(queue: queue)
     }
     
@@ -96,26 +92,19 @@ private extension NetworkConnection {
     ///   - data: message data
     ///   - completion: callback on complete
     private func processingSendMessage(data: Data, _ completion: @escaping () -> Void) {
-        guard let connection = connection else { return }
         guard processed else { return }
         processed = false
-        let queued = data.chunk
+        let queued = data.chunks
         guard !queued.isEmpty else { return }
-        for (i, data) in queued.enumerated() {
-            connection.batch {
-                connection.send(content: data, completion: .contentProcessed({ error in
-                    if let error = error {
-                        guard error != NWError.posix(.ECANCELED) else { return }
-                        self.stateUpdateHandler(.failed(error))
-                        return
-                    }
-                    self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
-                    if i == queued.endIndex - 1 {
-                        self.processed = true
-                        completion()
-                    }
-                }))
-            }
+        for data in queued {
+            connection.send(content: data, completion: .contentProcessed({ error in
+                if let error = error {
+                    guard error != NWError.posix(.ECANCELED) else { return }
+                    self.stateUpdateHandler(.failed(error))
+                }
+                self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
+                if data == queued.last { self.processed = true; completion() }
+            }))
         }
     }
     
@@ -135,46 +124,39 @@ private extension NetworkConnection {
     /// clean and cancel connection
     /// clear instance
     private func cleanup() {
-        guard let connection = connection else { return }
         connection.cancel()
-        self.connection = nil
     }
     
     /// connection state handler
     /// handles different network connection states
     private func stateHandler() {
-        guard let connection = connection else { return }
         connection.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             switch state {
+            case .cancelled: self.stateUpdateHandler(.cancelled)
             case .failed(let error), .waiting(let error):
                 self.stateUpdateHandler(.failed(error))
                 self.cleanup()
             case .ready:
                 self.stateUpdateHandler(.ready)
                 self.stopTimeout()
-            case .cancelled: self.stateUpdateHandler(.cancelled)
             default: break
             }
         }
     }
     
-    /// receive pure data frames
-    /// handles traffic input
-    private func receiveData() {
-        guard let connection = connection else { return }
-        connection.batch {
-            connection.receive(minimumIncompleteLength: minimumIncompleteLength, maximumLength: maximumLength) { [weak self] data, _, isComplete, error in
-                guard let self = self else { return }
-                if let error = error {
-                    guard error != NWError.posix(.ECANCELED) else { return }
-                    self.stateUpdateHandler(.failed(error))
-                    self.cleanup()
-                    return
-                }
-                if let data = data { self.processingParseMessage(data: data) }
-                if isComplete { self.cleanup() } else { self.receiveData() }
+    /// receives tcp data and parse it into a message frame
+    private func receiveMessage() {
+        connection.receive(minimumIncompleteLength: 0x1, maximumLength: 0x2000) { [weak self] data, _, isComplete, error in
+            guard let self = self else { return }
+            if let error = error {
+                guard error != NWError.posix(.ECANCELED) else { return }
+                self.stateUpdateHandler(.failed(error))
+                self.cleanup()
+                return
             }
+            if let data = data { self.processingParseMessage(data: data) }
+            if isComplete { self.cleanup() } else { self.receiveMessage() }
         }
     }
 }
