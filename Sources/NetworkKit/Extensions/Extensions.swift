@@ -34,9 +34,9 @@ internal extension UInt32 {
 // internal extensions
 internal extension Data {
     /// slice data into chunks
-    var chunk: [Data] {
+    var chunks: [Data] {
         var size = self.count / 0xFF
-        if size <= 0x2000 { size = 0x2000 }
+        size = Swift.max(size, 0x2000)
         return stride(from: .zero, to: self.count, by: size).map { count in
             Data(self[count..<Swift.min(count + size, self.count)])
         }
