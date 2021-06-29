@@ -34,23 +34,26 @@ class NetworkKitTestMultiMessage: XCTestCase {
     /// start test sending multi text message
     func testTextMessage() {
         cases = .string
-        stateUpdateHandler(connection: connection)
-        connection.start()
-        wait(for: [exp!], timeout: timeout)
+        start()
     }
     
     /// start test sending multi binary message
     func testBinaryMessage() {
         cases = .data
-        stateUpdateHandler(connection: connection)
-        connection.start()
-        wait(for: [exp!], timeout: timeout)
+        start()
     }
 }
 
 // MARK: - Private API Extension
 
 private extension NetworkKitTestMultiMessage {
+    
+    /// create a connection and start
+    private func start() {
+        stateUpdateHandler(connection: connection)
+        connection.start()
+        wait(for: [exp!], timeout: timeout)
+    }
     
     /// sends specific amount of messages
     /// - Parameter message: conforms to 'Data' and 'String'

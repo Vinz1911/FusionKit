@@ -12,4 +12,5 @@ internal enum NetworkOpcodes: UInt8 {
     case none = 0x0
     case text = 0x1
     case binary = 0x2
+    case ping = 0x3
 }

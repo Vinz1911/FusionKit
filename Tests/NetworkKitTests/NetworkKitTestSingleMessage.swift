@@ -12,6 +12,7 @@ import XCTest
 private enum TestCase {
     case string
     case data
+    case ping
 }
 
 class NetworkKitTestSingleMessage: XCTestCase {
@@ -30,24 +31,30 @@ class NetworkKitTestSingleMessage: XCTestCase {
     
     /// start test sending single text message
     func testTextMessage() {
-        cases = .string
-        stateUpdateHandler(connection: connection)
-        connection.start()
-        wait(for: [exp!], timeout: timeout)
+        cases = .string; start()
     }
     
     /// start test sending single binary message
     func testBinaryMessage() {
-        cases = .data
-        stateUpdateHandler(connection: connection)
-        connection.start()
-        wait(for: [exp!], timeout: timeout)
+        cases = .data; start()
+    }
+    
+    /// start test sending single ping message
+    func testPingMessage() {
+        cases = .ping; start()
     }
 }
 
 // MARK: - Private API Extension
 
 private extension NetworkKitTestSingleMessage {
+    
+    /// create a connection and start
+    private func start() {
+        stateUpdateHandler(connection: connection)
+        connection.start()
+        wait(for: [exp!], timeout: timeout)
+    }
 
     /// state update handler for connection
     /// - Parameter connection: instance of 'NetworkConnection'
@@ -57,8 +64,14 @@ private extension NetworkKitTestSingleMessage {
             case .ready:
                 if self.cases == .string { connection.send(message: self.buffer) }
                 if self.cases == .data { connection.send(message: Data(count: Int(self.buffer)!)) }
+                if self.cases == .ping { connection.send(message: Int(self.buffer)!) }
                 
             case .message(let message):
+                if case let message as Int = message {
+                    XCTAssertEqual(message, Int(self.buffer))
+                    connection.cancel()
+                    self.exp?.fulfill()
+                }
                 if case let message as Data = message {
                     XCTAssertEqual(message.count, Int(self.buffer))
                     connection.cancel()

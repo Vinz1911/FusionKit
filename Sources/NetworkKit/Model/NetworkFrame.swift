@@ -39,14 +39,18 @@ internal class NetworkFrame: NetworkFrameProtocol {
         guard buffer.count <= frameByteCount else { completion(nil, NetworkFrameError.readBufferOverflow); return }
         guard buffer.count >= overheadByteCount, buffer.count >= messageSize else { return }
         while buffer.count >= messageSize && messageSize != .zero {
-            if buffer.first == NetworkOpcodes.text.rawValue {
+            switch buffer.first {
+            case NetworkOpcodes.text.rawValue:
                 guard let bytes = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
                 guard let message = String(bytes: bytes, encoding: .utf8) else { completion(nil, NetworkFrameError.parsingFailed); return }
                 completion(message, nil)
-            }
-            if buffer.first == NetworkOpcodes.binary.rawValue {
+            case NetworkOpcodes.binary.rawValue:
                 guard let message = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
                 completion(message, nil)
+            case NetworkOpcodes.ping.rawValue:
+                guard let message = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
+                completion(message.count, nil)
+            default: completion(nil, NetworkFrameError.parsingFailed)
             }
             if buffer.count <= messageSize { buffer = Data() } else { buffer = Data(buffer[messageSize...]) }
         }
