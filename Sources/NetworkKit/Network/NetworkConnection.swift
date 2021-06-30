@@ -81,7 +81,7 @@ private extension NetworkConnection {
     }
     
     /// cancel a running timeout
-    private func stopTimeout() {
+    private func cancelTimeout() {
         guard let timer = self.timer else { return }
         timer.cancel()
         self.timer = nil
@@ -124,6 +124,7 @@ private extension NetworkConnection {
     /// clean and cancel connection
     /// clear instance
     private func cleanup() {
+        cancelTimeout()
         connection.cancel()
     }
     
@@ -139,7 +140,7 @@ private extension NetworkConnection {
                 self.cleanup()
             case .ready:
                 self.stateUpdateHandler(.ready)
-                self.stopTimeout()
+                self.cancelTimeout()
             default: break
             }
         }
