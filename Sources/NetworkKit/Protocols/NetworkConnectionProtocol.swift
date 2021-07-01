@@ -31,7 +31,6 @@ public protocol NetworkConnectionProtocol {
     
     /// send messages to a connected host
     /// - Parameters:
-    ///   - message: generic type, accepts 'String' and 'Data'
-    ///   - completion: callback when sending is completed
-    func send<T: NetworkMessage>(message: T, _ completion: (() -> Void)?)
+    ///   - message: generic type send 'Text', 'Data' and 'Ping'
+    func send<T: NetworkMessage>(message: T)
 }

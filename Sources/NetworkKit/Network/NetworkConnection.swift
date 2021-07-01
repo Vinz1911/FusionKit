@@ -16,7 +16,6 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     private let frame: NetworkFrame = NetworkFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
-    private var processed: Bool = true
     private var timer: DispatchSourceTimer?
     
     /// create instance of the 'ClientConnection' class
@@ -50,19 +49,17 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     
     /// send messages to a connected host
     /// - Parameters:
-    ///   - message: generic type, accepts 'String' and 'Data'
-    ///   - completion: callback when sending is completed
-    public func send<T: NetworkMessage>(message: T, _ completion: (() -> Void)? = nil) {
-        let result = frame.create(message: message)
-        if let error = result.error {
+    ///   - message: generic type send 'Text', 'Data' and 'Ping'
+    public func send<T: NetworkMessage>(message: T) {
+        let frame = frame.create(message: message)
+        if let error = frame.error {
             stateUpdateHandler(.failed(error))
             cleanup()
         }
-        guard let data = result.data else { return }
-        processingSendMessage(data: data) {
-            guard let completion = completion else { return }
-            completion()
-        }
+        guard let data = frame.data else { return }
+        let queued = data.chunks
+        guard !queued.isEmpty else { return }
+        for data in queued { processingSendMessage(data: data) }
     }
 }
 
@@ -90,21 +87,14 @@ private extension NetworkConnection {
     /// process message data and send it to a host
     /// - Parameters:
     ///   - data: message data
-    ///   - completion: callback on complete
-    private func processingSendMessage(data: Data, _ completion: @escaping () -> Void) {
-        guard processed else { return }
-        processed = false
-        let queued = data.chunks
-        guard !queued.isEmpty else { return }
-        for data in queued {
-            connection.send(content: data, completion: .contentProcessed({ error in
-                if let error = error {
-                    guard error != NWError.posix(.ECANCELED) else { return }
-                    self.stateUpdateHandler(.failed(error))
-                }
+    private func processingSendMessage(data: Data) {
+        connection.batch {
+            connection.send(content: data, completion: .contentProcessed { [weak self] error in
+                guard let self = self else { return }
                 self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
-                if data == queued.last { self.processed = true; completion() }
-            }))
+                guard let error = error, error != NWError.posix(.ECANCELED) else { return }
+                self.stateUpdateHandler(.failed(error))
+            })
         }
     }
     
@@ -113,10 +103,9 @@ private extension NetworkConnection {
     private func processingParseMessage(data: Data) {
         self.frame.parse(data: data) { message, error in
             if let message = message { self.stateUpdateHandler(.message(message)) }
-            if let error = error {
-                self.stateUpdateHandler(.failed(error))
-                self.cleanup()
-            }
+            guard let error = error else { return }
+            self.stateUpdateHandler(.failed(error))
+            self.cleanup()
         }
         self.stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
     }
@@ -148,16 +137,18 @@ private extension NetworkConnection {
     
     /// receives tcp data and parse it into a message frame
     private func receiveMessage() {
-        connection.receive(minimumIncompleteLength: 0x1, maximumLength: 0x2000) { [weak self] data, _, isComplete, error in
-            guard let self = self else { return }
-            if let error = error {
-                guard error != NWError.posix(.ECANCELED) else { return }
-                self.stateUpdateHandler(.failed(error))
-                self.cleanup()
-                return
+        connection.batch {
+            connection.receive(minimumIncompleteLength: 0x1, maximumLength: 0x2000) { [weak self] data, _, isComplete, error in
+                guard let self = self else { return }
+                if let error = error {
+                    guard error != NWError.posix(.ECANCELED) else { return }
+                    self.stateUpdateHandler(.failed(error))
+                    self.cleanup()
+                    return
+                }
+                if let data = data { self.processingParseMessage(data: data) }
+                if isComplete { self.cleanup() } else { self.receiveMessage() }
             }
-            if let data = data { self.processingParseMessage(data: data) }
-            if isComplete { self.cleanup() } else { self.receiveMessage() }
         }
     }
 }
