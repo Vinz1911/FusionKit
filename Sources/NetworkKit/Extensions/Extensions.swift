@@ -26,7 +26,7 @@ internal extension Timer {
 
 internal extension UInt32 {
     /// convert integer to data with bigEndian
-    var data: Data {
+    var bigEndianBytes: Data {
         withUnsafeBytes(of: self.bigEndian) { bytes in Data(bytes) }
     }
 }

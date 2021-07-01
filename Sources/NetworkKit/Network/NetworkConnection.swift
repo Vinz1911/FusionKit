@@ -130,8 +130,7 @@ private extension NetworkConnection {
             case .ready:
                 self.stateUpdateHandler(.ready)
                 self.cancelTimeout()
-            default: break
-            }
+            default: break }
         }
     }
     

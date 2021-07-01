@@ -20,11 +20,14 @@ internal class NetworkFrame: NetworkFrameProtocol {
     ///   - completion: completion block, returns error
     /// - Returns: message data frame
     internal func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?) {
+        guard message.raw.count <= frameByteCount - overheadByteCount else {
+            return (nil, NetworkFrameError.writeBufferOverflow)
+        }
         var frame = Data()
+        let length = UInt32(message.raw.count + overheadByteCount)
         frame.append(message.opcode)
-        frame.append(UInt32(message.raw.count + overheadByteCount).data)
+        frame.append(length.bigEndianBytes)
         frame.append(message.raw)
-        guard frame.count <= frameByteCount else { return (nil, NetworkFrameError.writeBufferOverflow) }
         return (frame, nil)
     }
     
@@ -35,24 +38,19 @@ internal class NetworkFrame: NetworkFrameProtocol {
     /// - Returns: optional error
     internal func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
         buffer.append(data)
-        guard let messageSize = extractMessageSize() else { return }
+        guard let length = extractSize() else { return }
         guard buffer.count <= frameByteCount else { completion(nil, NetworkFrameError.readBufferOverflow); return }
-        guard buffer.count >= overheadByteCount, buffer.count >= messageSize else { return }
-        while buffer.count >= messageSize && messageSize != .zero {
+        guard buffer.count >= overheadByteCount, buffer.count >= length else { return }
+        while buffer.count >= length && length != .zero {
+            guard let bytes = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
             switch buffer.first {
+            case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
+            case NetworkOpcodes.ping.rawValue: completion(bytes.count, nil)
             case NetworkOpcodes.text.rawValue:
-                guard let bytes = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
-                guard let message = String(bytes: bytes, encoding: .utf8) else { completion(nil, NetworkFrameError.parsingFailed); return }
-                completion(message, nil)
-            case NetworkOpcodes.binary.rawValue:
-                guard let message = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
-                completion(message, nil)
-            case NetworkOpcodes.ping.rawValue:
-                guard let message = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
-                completion(message.count, nil)
-            default: completion(nil, NetworkFrameError.parsingFailed)
-            }
-            if buffer.count <= messageSize { buffer = Data() } else { buffer = Data(buffer[messageSize...]) }
+                guard let result = String(bytes: bytes, encoding: .utf8) else { return }
+                completion(result, nil)
+            default: completion(nil, NetworkFrameError.parsingFailed) }
+            if buffer.count <= length { buffer = Data() } else { buffer = Data(buffer[length...]) }
         }
     }
 }
@@ -63,7 +61,7 @@ private extension NetworkFrame {
     
     // extract the message frame size from the data
     // if not possible it returns nil
-    private func extractMessageSize() -> UInt32? {
+    private func extractSize() -> UInt32? {
         guard buffer.count >= overheadByteCount else { return nil }
         let size = Data(buffer[1...overheadByteCount - 1])
         return size.bigEndian
@@ -73,7 +71,8 @@ private extension NetworkFrame {
     // if not possible it returns nil
     private func extractMessage(data: Data) -> Data? {
         guard data.count >= overheadByteCount else { return nil }
-        guard let messageSize = extractMessageSize() else { return nil }
-        return Data(data[overheadByteCount...Int(messageSize - 1)])
+        guard let length = extractSize() else { return nil }
+        guard length > overheadByteCount else { return Data() }
+        return Data(data[overheadByteCount...Int(length - 1)])
     }
 }

@@ -87,8 +87,7 @@ private extension NetworkKitTestSingleMessage {
                 guard let error = error else { return }
                 XCTFail("failed with error: \(error)")
 
-            default: break
-            }
+            default: break }
         }
     }
 }
