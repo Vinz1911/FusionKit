@@ -1,7 +1,7 @@
 <div align="center">
     <h1>
         <br>
-            <a href="https://github.com/Vinz1911/NetworKit"><img src="https://github.com/Vinz1911/NetworKit/blob/develop/network.svg" alt="FastSocket" width="300"></a>
+            <a href="https://github.com/Vinz1911/NetworKit"><img src="https://github.com/Vinz1911/NetworKit/blob/develop/.network.svg" alt="NetworKit" width="300"></a>
         <br>
         <br>
             NetworKit
