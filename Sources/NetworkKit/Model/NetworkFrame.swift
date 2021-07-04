@@ -45,7 +45,7 @@ internal class NetworkFrame: NetworkFrameProtocol {
             guard let bytes = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
             switch buffer.first {
             case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
-            case NetworkOpcodes.ping.rawValue: completion(bytes.count, nil)
+            case NetworkOpcodes.ping.rawValue: completion(UInt16(bytes.count), nil)
             case NetworkOpcodes.text.rawValue:
                 guard let result = String(bytes: bytes, encoding: .utf8) else { return }
                 completion(result, nil)

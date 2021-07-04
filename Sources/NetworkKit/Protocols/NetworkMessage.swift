@@ -15,9 +15,9 @@ public protocol NetworkMessage {
 }
 
 /// conformance to protocol 'NetworkMessage'
-extension Int: NetworkMessage {
+extension UInt16: NetworkMessage {
     public var opcode: UInt8 { NetworkOpcodes.ping.rawValue }
-    public var raw: Data { Data(count: self) }
+    public var raw: Data { Data(count: Int(self)) }
 }
 
 /// conformance to protocol 'NetworkMessage'

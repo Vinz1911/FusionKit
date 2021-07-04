@@ -64,11 +64,11 @@ private extension NetworkKitTestSingleMessage {
             case .ready:
                 if self.cases == .string { connection.send(message: self.buffer) }
                 if self.cases == .data { connection.send(message: Data(count: Int(self.buffer)!)) }
-                if self.cases == .ping { connection.send(message: Int(self.buffer)!) }
+                if self.cases == .ping { connection.send(message: UInt16(self.buffer)!) }
                 
             case .message(let message):
-                if case let message as Int = message {
-                    XCTAssertEqual(message, Int(self.buffer))
+                if case let message as UInt16 = message {
+                    XCTAssertEqual(message, UInt16(self.buffer))
                     connection.cancel()
                     self.exp?.fulfill()
                 }
