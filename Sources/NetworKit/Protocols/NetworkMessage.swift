@@ -1,6 +1,6 @@
 //
 //  NetworkMessage.swift
-//  NetworkKit
+//  NetworKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -15,9 +15,9 @@ public protocol NetworkMessage {
 }
 
 /// conformance to protocol 'NetworkMessage'
-extension Int: NetworkMessage {
+extension UInt16: NetworkMessage {
     public var opcode: UInt8 { NetworkOpcodes.ping.rawValue }
-    public var raw: Data { Data(count: self) }
+    public var raw: Data { Data(count: Int(self)) }
 }
 
 /// conformance to protocol 'NetworkMessage'

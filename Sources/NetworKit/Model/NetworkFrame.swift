@@ -1,6 +1,6 @@
 //
 //  NetworkFrame.swift
-//  NetworkKit
+//  NetworKit
 //
 //  Created by Vinzenz Weist on 07.06.21
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -45,7 +45,7 @@ internal class NetworkFrame: NetworkFrameProtocol {
             guard let bytes = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
             switch buffer.first {
             case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
-            case NetworkOpcodes.ping.rawValue: completion(bytes.count, nil)
+            case NetworkOpcodes.ping.rawValue: completion(UInt16(bytes.count), nil)
             case NetworkOpcodes.text.rawValue:
                 guard let result = String(bytes: bytes, encoding: .utf8) else { return }
                 completion(result, nil)
