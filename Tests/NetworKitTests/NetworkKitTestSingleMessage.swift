@@ -1,13 +1,13 @@
 //
-//  NetworkKitTestSingleMessage.swift.swift
-//  NetworkKit
+//  NetworKitTestSingleMessage.swift.swift
+//  NetworKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
 //
 
 import XCTest
-@testable import NetworkKit
+@testable import NetworKit
 
 private enum TestCase {
     case string
@@ -15,7 +15,7 @@ private enum TestCase {
     case ping
 }
 
-class NetworkKitTestSingleMessage: XCTestCase {
+class NetworKitTestSingleMessage: XCTestCase {
 
     private var connection = NetworkConnection(host: "network-co.de", port: 7878)
     private var buffer = "50000"
@@ -47,7 +47,7 @@ class NetworkKitTestSingleMessage: XCTestCase {
 
 // MARK: - Private API Extension
 
-private extension NetworkKitTestSingleMessage {
+private extension NetworKitTestSingleMessage {
     
     /// create a connection and start
     private func start() {

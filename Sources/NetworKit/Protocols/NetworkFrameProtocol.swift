@@ -1,6 +1,6 @@
 //
 //  NetworkFrameProtocol.swift
-//  NetworkKit
+//  NetworKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
