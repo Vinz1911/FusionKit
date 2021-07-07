@@ -13,7 +13,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     
     public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
     
-    private let frame: NetworkFrame = NetworkFrame()
+    private var frame: NetworkFrame = NetworkFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
     private var timer: DispatchSourceTimer?
@@ -115,6 +115,7 @@ private extension NetworkConnection {
     private func cleanup() {
         cancelTimeout()
         connection.cancel()
+        frame = NetworkFrame()
     }
     
     /// connection state handler
@@ -137,7 +138,7 @@ private extension NetworkConnection {
     /// receives tcp data and parse it into a message frame
     private func receiveMessage() {
         connection.batch {
-            connection.receive(minimumIncompleteLength: 0x1, maximumLength: 0x2000) { [weak self] data, _, isComplete, error in
+            connection.receive(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
                 guard let self = self else { return }
                 if let error = error {
                     guard error != NWError.posix(.ECANCELED) else { return }

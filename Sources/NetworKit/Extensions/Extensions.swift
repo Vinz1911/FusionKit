@@ -31,6 +31,11 @@ internal extension UInt32 {
     }
 }
 
+internal extension Int {
+    static var minimum: Int { 0x1 }
+    static var maximum: Int { 0x2000 }
+}
+
 // internal extensions
 internal extension Data {
     /// slice data into chunks
