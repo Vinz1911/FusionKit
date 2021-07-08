@@ -18,6 +18,7 @@ public protocol NetworkConnectionProtocol {
     /// - Parameters:
     ///   - host: the host to connect
     ///   - port: the port of the host
+    ///   - parameters: network parameters
     ///   - queue: dispatch queue
     init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
     
