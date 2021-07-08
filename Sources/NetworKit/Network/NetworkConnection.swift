@@ -24,7 +24,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     ///   - host: the host name
     ///   - port: the host port
     ///   - parameters: network parameters
-    ///   - qos: dispatch qos, default is background
+    ///   - queue: dispatch queue
     required public init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString)) {
         if host.isEmpty { fatalError(NetworkConnectionError.missingHost.description) }
         if port == .zero { fatalError(NetworkConnectionError.missingPort.description) }
@@ -101,21 +101,24 @@ private extension NetworkConnection {
     /// process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processingParseMessage(data: Data) {
-        self.frame.parse(data: data) { message, error in
-            if let message = message { self.stateUpdateHandler(.message(message)) }
+        frame.parse(data: data) { message, error in
+            if let message = message { stateUpdateHandler(.message(message)) }
             guard let error = error else { return }
-            self.stateUpdateHandler(.failed(error))
-            self.cleanup()
+            stateUpdateHandler(.failed(error))
+            cleanup()
         }
-        self.stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
+        stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
     }
     
     /// clean and cancel connection
     /// clear instance
     private func cleanup() {
-        cancelTimeout()
-        connection.cancel()
-        frame = NetworkFrame()
+        queue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
+            self.cancelTimeout()
+            self.connection.cancel()
+            self.frame = NetworkFrame()
+        }
     }
     
     /// connection state handler
