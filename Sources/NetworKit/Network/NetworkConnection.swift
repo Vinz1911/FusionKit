@@ -13,7 +13,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     
     public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
     
-    private var frame: NetworkFrame = NetworkFrame()
+    private var frame: NetworkFrame?
     private let queue: DispatchQueue
     private var connection: NWConnection
     private var timer: DispatchSourceTimer?
@@ -35,6 +35,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// start a connection to a host
     /// creates a async tcp connection
     public func start() {
+        frame = NetworkFrame()
         stateHandler()
         startTimeout()
         receiveMessage()
@@ -51,12 +52,13 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// - Parameters:
     ///   - message: generic type send 'Text', 'Data' and 'Ping'
     public func send<T: NetworkMessage>(message: T) {
-        let frame = frame.create(message: message)
-        if let error = frame.error {
+        guard let frame = frame else { return }
+        let message = frame.create(message: message)
+        if let error = message.error {
             stateUpdateHandler(.failed(error))
             cleanup()
         }
-        guard let data = frame.data else { return }
+        guard let data = message.data else { return }
         let queued = data.chunks
         guard !queued.isEmpty else { return }
         for data in queued { processingSendMessage(data: data) }
@@ -101,6 +103,7 @@ private extension NetworkConnection {
     /// process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processingParseMessage(data: Data) {
+        guard let frame = frame else { return }
         frame.parse(data: data) { message, error in
             if let message = message { stateUpdateHandler(.message(message)) }
             guard let error = error else { return }
