@@ -19,7 +19,7 @@ class NetworKitTestSingleMessage: XCTestCase {
 
     private var connection = NetworkConnection(host: "network-co.de", port: 7878)
     private var buffer = "50000"
-    private let timeout = 100.0
+    private let timeout = 10.0
     private var cases: TestCase? = nil
     private var exp: XCTestExpectation?
     
