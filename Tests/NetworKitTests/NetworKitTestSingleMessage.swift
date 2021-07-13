@@ -59,7 +59,8 @@ private extension NetworKitTestSingleMessage {
     /// state update handler for connection
     /// - Parameter connection: instance of 'NetworkConnection'
     private func stateUpdateHandler(connection: NetworkConnection) {
-        connection.stateUpdateHandler = { state in
+        connection.stateUpdateHandler = { [weak self] state in
+            guard let self = self else { return }
             switch state {
             case .ready:
                 if self.cases == .string { connection.send(message: self.buffer) }

@@ -13,7 +13,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     
     public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
     
-    private var frame: NetworkFrame?
+    private var frame = NetworkFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
     private var timer: DispatchSourceTimer?
@@ -35,8 +35,8 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// start a connection to a host
     /// creates a async tcp connection
     public func start() {
-        frame = NetworkFrame()
-        stateHandler()
+        frame.reset()
+        updateHandler()
         startTimeout()
         receiveMessage()
         connection.start(queue: queue)
@@ -52,7 +52,6 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// - Parameters:
     ///   - message: generic type send 'Text', 'Data' and 'Ping'
     public func send<T: NetworkMessage>(message: T) {
-        guard let frame = frame else { return }
         let message = frame.create(message: message)
         if let error = message.error {
             stateUpdateHandler(.failed(error))
@@ -103,7 +102,6 @@ private extension NetworkConnection {
     /// process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processingParseMessage(data: Data) {
-        guard let frame = frame else { return }
         frame.parse(data: data) { message, error in
             if let message = message { stateUpdateHandler(.message(message)) }
             guard let error = error else { return }
@@ -120,13 +118,13 @@ private extension NetworkConnection {
             guard let self = self else { return }
             self.cancelTimeout()
             self.connection.cancel()
-            self.frame = NetworkFrame()
+            self.frame.reset()
         }
     }
     
     /// connection state handler
     /// handles different network connection states
-    private func stateHandler() {
+    private func updateHandler() {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             switch state {
@@ -137,7 +135,8 @@ private extension NetworkConnection {
             case .ready:
                 self.stateUpdateHandler(.ready)
                 self.cancelTimeout()
-            default: break }
+            default: break
+            }
         }
     }
     

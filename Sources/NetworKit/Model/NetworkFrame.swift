@@ -13,6 +13,9 @@ internal class NetworkFrame: NetworkFrameProtocol {
     private var buffer: Data = Data()
     private let overheadByteCount: Int = Int(0x5)
     private let frameByteCount: Int = Int(UInt32.max)
+    
+    /// reset buffer
+    internal func reset() { buffer = Data() }
 
     /// create compliant message conform to 'NetworkMessage' protocol
     /// - Parameters:
@@ -46,10 +49,9 @@ internal class NetworkFrame: NetworkFrameProtocol {
             switch buffer.first {
             case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
             case NetworkOpcodes.ping.rawValue: completion(UInt16(bytes.count), nil)
-            case NetworkOpcodes.text.rawValue:
-                guard let result = String(bytes: bytes, encoding: .utf8) else { return }
-                completion(result, nil)
-            default: completion(nil, NetworkFrameError.parsingFailed) }
+            case NetworkOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(result, nil)
+            default: completion(nil, NetworkFrameError.parsingFailed)
+            }
             if buffer.count <= length { buffer = Data() } else { buffer = Data(buffer[length...]) }
         }
     }
