@@ -25,6 +25,7 @@ internal extension Timer {
 }
 
 internal extension UInt32 {
+    
     /// convert integer to data with bigEndian
     var bigEndianBytes: Data {
         withUnsafeBytes(of: self.bigEndian) { bytes in Data(bytes) }
@@ -32,12 +33,17 @@ internal extension UInt32 {
 }
 
 internal extension Int {
+    
+    /// minimum size of received bytes
     static var minimum: Int { 0x1 }
+    
+    /// maximum size of received bytes
     static var maximum: Int { 0x2000 }
 }
 
 // internal extensions
 internal extension Data {
+    
     /// slice data into chunks
     var chunks: [Data] {
         var size = self.count / 0xFF
@@ -46,6 +52,7 @@ internal extension Data {
             Data(self[count..<Swift.min(count + size, self.count)])
         }
     }
+    
     /// func to extract integers from data as big endian
     var bigEndian: UInt32 {
         guard !self.isEmpty else { return .zero }
