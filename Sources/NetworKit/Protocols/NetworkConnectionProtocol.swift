@@ -31,7 +31,6 @@ public protocol NetworkConnectionProtocol {
     func cancel()
     
     /// send messages to a connected host
-    /// - Parameters:
-    ///   - message: generic type send 'Text', 'Data' and 'Ping'
+    /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
     func send<T: NetworkMessage>(message: T)
 }

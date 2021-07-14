@@ -10,9 +10,7 @@ import XCTest
 @testable import NetworKit
 
 private enum TestCase {
-    case string
-    case data
-    case ping
+    case string; case data; case ping
 }
 
 class NetworKitTestSingleMessage: XCTestCase {
@@ -45,7 +43,7 @@ class NetworKitTestSingleMessage: XCTestCase {
     }
 }
 
-// MARK: - Private API Extension
+// MARK: - Private API Extension -
 
 private extension NetworKitTestSingleMessage {
     

@@ -8,26 +8,22 @@
 
 import Foundation
 
-internal class NetworkFrame: NetworkFrameProtocol {
+internal final class NetworkFrame: NetworkFrameProtocol {
 
-    private var buffer: Data = Data()
-    private let overheadByteCount: Int = Int(0x5)
-    private let frameByteCount: Int = Int(UInt32.max)
+    private var buffer = Data()
+    private let overheadByteCount = Int(0x5)
+    private let frameByteCount = Int(UInt32.max)
     
     /// reset buffer
     internal func reset() { buffer = Data() }
 
-    /// create compliant message conform to 'NetworkMessage' protocol
-    /// - Parameters:
-    ///   - message: generic type conforms to 'Data' and 'String'
-    ///   - completion: completion block, returns error
-    /// - Returns: message data frame
+    /// create a protocol conform message frame
+    /// - Parameter message: generic type which conforms to 'Data' and 'String'
+    /// - Returns: message frame as data and optional error
     internal func create<T: NetworkMessage>(message: T) -> (data: Data?, error: Error?) {
-        guard message.raw.count <= frameByteCount - overheadByteCount else {
-            return (nil, NetworkFrameError.writeBufferOverflow)
-        }
-        var frame = Data()
+        guard message.raw.count <= frameByteCount - overheadByteCount else { return (nil, NetworkFrameError.writeBufferOverflow) }
         let length = UInt32(message.raw.count + overheadByteCount)
+        var frame = Data()
         frame.append(message.opcode)
         frame.append(length.bigEndianBytes)
         frame.append(message.raw)
@@ -38,7 +34,6 @@ internal class NetworkFrame: NetworkFrameProtocol {
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
-    /// - Returns: optional error
     internal func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
         buffer.append(data)
         guard let length = extractSize() else { return }
@@ -50,14 +45,13 @@ internal class NetworkFrame: NetworkFrameProtocol {
             case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
             case NetworkOpcodes.ping.rawValue: completion(UInt16(bytes.count), nil)
             case NetworkOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(result, nil)
-            default: completion(nil, NetworkFrameError.parsingFailed)
-            }
+            default: completion(nil, NetworkFrameError.parsingFailed) }
             if buffer.count <= length { buffer = Data() } else { buffer = Data(buffer[length...]) }
         }
     }
 }
 
-// MARK: - Private API Extension
+// MARK: - Private API Extension -
 
 private extension NetworkFrame {
     

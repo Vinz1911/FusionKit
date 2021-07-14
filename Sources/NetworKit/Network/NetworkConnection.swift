@@ -25,7 +25,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     ///   - port: the host port
     ///   - parameters: network parameters
     ///   - queue: dispatch queue
-    required public init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString)) {
+    public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString)) {
         if host.isEmpty { fatalError(NetworkConnectionError.missingHost.description) }
         if port == .zero { fatalError(NetworkConnectionError.missingPort.description) }
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
@@ -36,9 +36,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// creates a async tcp connection
     public func start() {
         frame.reset()
-        updateHandler()
-        startTimeout()
-        receiveMessage()
+        timeout(); handler(); receive()
         connection.start(queue: queue)
     }
     
@@ -49,8 +47,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     }
     
     /// send messages to a connected host
-    /// - Parameters:
-    ///   - message: generic type send 'Text', 'Data' and 'Ping'
+    /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
     public func send<T: NetworkMessage>(message: T) {
         let message = frame.create(message: message)
         if let error = message.error {
@@ -60,17 +57,17 @@ public final class NetworkConnection: NetworkConnectionProtocol {
         guard let data = message.data else { return }
         let queued = data.chunks
         guard !queued.isEmpty else { return }
-        for data in queued { processingSendMessage(data: data) }
+        for data in queued { processing(with: data) }
     }
 }
 
-// MARK: - Private API Extension
+// MARK: - Private API -
 
 private extension NetworkConnection {
     
     /// start timeout and cancel connection
     /// if timeout value is reached
-    private func startTimeout() {
+    private func timeout() {
         self.timer = Timer.timeout { [weak self] in
             guard let self = self else { return }
             self.cleanup()
@@ -79,16 +76,15 @@ private extension NetworkConnection {
     }
     
     /// cancel a running timeout
-    private func cancelTimeout() {
+    private func invalidate() {
         guard let timer = self.timer else { return }
         timer.cancel()
         self.timer = nil
     }
     
     /// process message data and send it to a host
-    /// - Parameters:
-    ///   - data: message data
-    private func processingSendMessage(data: Data) {
+    /// - Parameter data: message data
+    private func processing(with data: Data) {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
                 guard let self = self else { return }
@@ -101,12 +97,11 @@ private extension NetworkConnection {
     
     /// process message data and parse it into a conform message
     /// - Parameter data: message data
-    private func processingParseMessage(data: Data) {
+    private func processing(from data: Data) {
         frame.parse(data: data) { message, error in
             if let message = message { stateUpdateHandler(.message(message)) }
             guard let error = error else { return }
-            stateUpdateHandler(.failed(error))
-            cleanup()
+            stateUpdateHandler(.failed(error)); cleanup()
         }
         stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
     }
@@ -116,15 +111,15 @@ private extension NetworkConnection {
     private func cleanup() {
         queue.async(flags: .barrier) { [weak self] in
             guard let self = self else { return }
-            self.cancelTimeout()
+            self.invalidate()
             self.connection.cancel()
             self.frame.reset()
         }
     }
     
-    /// connection state handler
+    /// connection state update handler
     /// handles different network connection states
-    private func updateHandler() {
+    private func handler() {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             switch state {
@@ -134,25 +129,23 @@ private extension NetworkConnection {
                 self.cleanup()
             case .ready:
                 self.stateUpdateHandler(.ready)
-                self.cancelTimeout()
-            default: break
-            }
+                self.invalidate()
+            default: break }
         }
     }
     
     /// receives tcp data and parse it into a message frame
-    private func receiveMessage() {
+    private func receive() {
         connection.batch {
             connection.receive(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
                 guard let self = self else { return }
                 if let error = error {
                     guard error != NWError.posix(.ECANCELED) else { return }
-                    self.stateUpdateHandler(.failed(error))
-                    self.cleanup()
+                    self.stateUpdateHandler(.failed(error)); self.cleanup()
                     return
                 }
-                if let data = data { self.processingParseMessage(data: data) }
-                if isComplete { self.cleanup() } else { self.receiveMessage() }
+                if let data = data { self.processing(from: data) }
+                if isComplete { self.cleanup() } else { self.receive() }
             }
         }
     }
