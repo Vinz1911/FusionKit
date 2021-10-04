@@ -10,7 +10,6 @@ import Foundation
 import Network
 
 public protocol NetworkConnectionProtocol {
-    
     /// result type
     var stateUpdateHandler: (NetworkConnectionResult) -> Void { get set }
     

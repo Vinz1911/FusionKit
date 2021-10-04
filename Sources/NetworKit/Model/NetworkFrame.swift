@@ -9,14 +9,11 @@
 import Foundation
 
 internal final class NetworkFrame: NetworkFrameProtocol {
-
     private var buffer = Data()
     private let overheadByteCount = Int(0x5)
     private let frameByteCount = Int(UInt32.max)
-    
-    /// reset buffer
     internal func reset() { buffer = Data() }
-
+    
     /// create a protocol conform message frame
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: message frame as data and optional error
@@ -54,7 +51,6 @@ internal final class NetworkFrame: NetworkFrameProtocol {
 // MARK: - Private API Extension -
 
 private extension NetworkFrame {
-    
     // extract the message frame size from the data
     // if not possible it returns nil
     private func extractSize() -> UInt32? {
