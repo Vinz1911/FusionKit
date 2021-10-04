@@ -10,9 +10,7 @@ import Foundation
 import Network
 
 public final class NetworkConnection: NetworkConnectionProtocol {
-    
     public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
-    
     private var frame = NetworkFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
@@ -35,7 +33,6 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// start a connection to a host
     /// creates a async tcp connection
     public func start() {
-        frame.reset()
         timeout(); handler(); receive()
         connection.start(queue: queue)
     }
@@ -50,10 +47,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
     public func send<T: NetworkMessage>(message: T) {
         let message = frame.create(message: message)
-        if let error = message.error {
-            stateUpdateHandler(.failed(error))
-            cleanup()
-        }
+        if let error = message.error { stateUpdateHandler(.failed(error)); cleanup() }
         guard let data = message.data else { return }
         let queued = data.chunks
         guard !queued.isEmpty else { return }
@@ -64,7 +58,6 @@ public final class NetworkConnection: NetworkConnectionProtocol {
 // MARK: - Private API -
 
 private extension NetworkConnection {
-    
     /// start timeout and cancel connection
     /// if timeout value is reached
     private func timeout() {
@@ -78,8 +71,7 @@ private extension NetworkConnection {
     /// cancel a running timeout
     private func invalidate() {
         guard let timer = self.timer else { return }
-        timer.cancel()
-        self.timer = nil
+        timer.cancel(); self.timer = nil
     }
     
     /// process message data and send it to a host
@@ -124,12 +116,8 @@ private extension NetworkConnection {
             guard let self = self else { return }
             switch state {
             case .cancelled: self.stateUpdateHandler(.cancelled)
-            case .failed(let error), .waiting(let error):
-                self.stateUpdateHandler(.failed(error))
-                self.cleanup()
-            case .ready:
-                self.stateUpdateHandler(.ready)
-                self.invalidate()
+            case .failed(let error), .waiting(let error): self.stateUpdateHandler(.failed(error)); self.cleanup()
+            case .ready: self.stateUpdateHandler(.ready); self.invalidate()
             default: break }
         }
     }

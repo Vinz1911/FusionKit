@@ -9,7 +9,6 @@ import Foundation
 import Network
 
 internal extension Timer {
-    
     /// create a timeout
     /// - Parameters:
     ///   - after: executed after given time
@@ -25,7 +24,6 @@ internal extension Timer {
 }
 
 internal extension UInt32 {
-    
     /// convert integer to data with bigEndian
     var bigEndianBytes: Data {
         withUnsafeBytes(of: self.bigEndian) { bytes in Data(bytes) }
@@ -33,7 +31,6 @@ internal extension UInt32 {
 }
 
 internal extension Int {
-    
     /// minimum size of received bytes
     static var minimum: Int { 0x1 }
     
@@ -43,7 +40,6 @@ internal extension Int {
 
 // internal extensions
 internal extension Data {
-    
     /// slice data into chunks
     var chunks: [Data] {
         var size = self.count / 0xFF

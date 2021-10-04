@@ -9,7 +9,6 @@
 import Foundation
 
 internal protocol NetworkFrameProtocol {
-    
     /// create a protocol conform message frame
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: message frame as data and optional error

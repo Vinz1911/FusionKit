@@ -14,7 +14,6 @@ private enum TestCase {
 }
 
 class NetworKitTestSingleMessage: XCTestCase {
-
     private var connection = NetworkConnection(host: "network-co.de", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
@@ -46,14 +45,13 @@ class NetworKitTestSingleMessage: XCTestCase {
 // MARK: - Private API Extension -
 
 private extension NetworKitTestSingleMessage {
-    
     /// create a connection and start
     private func start() {
         stateUpdateHandler(connection: connection)
         connection.start()
         wait(for: [exp!], timeout: timeout)
     }
-
+    
     /// state update handler for connection
     /// - Parameter connection: instance of 'NetworkConnection'
     private func stateUpdateHandler(connection: NetworkConnection) {
