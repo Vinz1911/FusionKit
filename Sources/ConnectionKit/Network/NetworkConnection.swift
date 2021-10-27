@@ -1,6 +1,6 @@
 //
 //  NetworkConnection.swift
-//  NetworKit
+//  ConnectionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -16,8 +16,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     private var connection: NWConnection
     private var timer: DispatchSourceTimer?
     
-    /// create instance of the 'ClientConnection' class
-    /// this class handles raw tcp connection
+    /// create a new connection with 'ConnectionKit'
     /// - Parameters:
     ///   - host: the host name
     ///   - port: the host port

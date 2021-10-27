@@ -1,6 +1,6 @@
 //
 //  NetworkResult.swift
-//  NetworKit
+//  ConnectionKit
 //
 //  Created by Vinzenz Weist on 09.06.21.
 //

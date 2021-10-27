@@ -1,19 +1,12 @@
-<div align="center">
-    <h1>
-            <a href="https://github.com/Vinz1911/NetworKit"><img src="https://github.com/Vinz1911/NetworKit/blob/main/.network.svg" alt="NetworKit" width="300"></a>
-        <br>
-        <br>
-            NetworKit
-    </h1>
-</div>
+# ConnectionKit
 
-`NetworKit` is a library which implements the `NWC-Protocol`. The `NWC-Protocol` is proprietary networking protocol which uses a small and lightweight header with a performance as fast as raw tcp performance. Built directly on top of Apples `Network.framework` with support for plain tcp and tls encrypted connections. The implementation for the host is [Network-GO](https://github.com/Vinz1911/network-go) written in golang with awesome concurrency support to ensure maximum performance.
+`ConnectionKit` is a library which implements the `NWC-Protocol`. The `NWC-Protocol` is proprietary networking protocol which uses a small and lightweight header with a performance as fast as raw tcp performance. Built directly on top of Apples `Network.framework` with support for plain tcp and tls encrypted connections. The implementation for the host is [Network-GO](https://github.com/Vinz1911/network-go) written in golang with awesome concurrency support to ensure maximum performance.
 
 ## License:
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg?longCache=true&style=flat)](https://github.com/Vinz1911/NetworKit/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg?longCache=true&style=flat)](https://github.com/Vinz1911/ConnectionKit/blob/main/LICENSE)
 
 ## Swift Version:
-[![Swift 5.4](https://img.shields.io/badge/Swift-5.4-orange.svg?logo=swift&style=flat)](https://swift.org) [![Swift 5.4](https://img.shields.io/badge/SPM-Support-orange.svg?logo=swift&style=flat)](https://swift.org)
+[![Swift 5.5](https://img.shields.io/badge/Swift-5.5-orange.svg?logo=swift&style=flat)](https://swift.org) [![Swift 5.5](https://img.shields.io/badge/SPM-Support-orange.svg?logo=swift&style=flat)](https://swift.org)
 
 ## Installation:
 ### Swift Packages
@@ -22,7 +15,7 @@
 ## Import:
 ```swift
 // import the Framework
-import NetworKit
+import ConnectionKit
 
 // create a new connection
 let connection = NetworkConnection(host: "example.com", port: 8080)
@@ -35,6 +28,9 @@ let connection = NetworkConnection(host: "example.com", port: 8080, parameters: 
 
 ## Callback:
 ```swift
+// import the Framework
+import ConnectionKit
+
 // create a new connection
 let connection = NetworkConnection(host: "example.com", port: 8080)
 
@@ -56,6 +52,22 @@ connection.stateUpdateHandler = { state in
 
 // start connection
 connection.start()
+```
+
+## Send Messages:
+```swift
+// import the Framework
+import ConnectionKit
+
+// create a new connection
+let connection = NetworkConnection(host: "example.com", port: 8080)
+
+// the framework accepts generic data types
+// send strings
+connection.send(message: "Hello World!")
+
+// send data
+connection.send(message: Data(count: 100))
 ```
 
 ## Author:
