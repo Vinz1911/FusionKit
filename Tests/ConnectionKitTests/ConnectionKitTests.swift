@@ -1,19 +1,19 @@
 //
-//  NetworKitTestSingleMessage.swift.swift
-//  NetworKit
+//  ConnectionKitTests.swift.swift
+//  ConnectionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
 //
 
 import XCTest
-@testable import NetworKit
+@testable import ConnectionKit
 
 private enum TestCase {
     case string; case data; case ping
 }
 
-class NetworKitTests: XCTestCase {
+class ConnectionKitTests: XCTestCase {
     private var connection = NetworkConnection(host: "sheldon.network-co.de", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
@@ -44,7 +44,7 @@ class NetworKitTests: XCTestCase {
 
 // MARK: - Private API Extension -
 
-private extension NetworKitTests {
+private extension ConnectionKitTests {
     /// create a connection and start
     private func start() {
         stateUpdateHandler(connection: connection)

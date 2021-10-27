@@ -1,6 +1,6 @@
 //
 //  NetworkConnectionProtocol.swift
-//  NetworKit
+//  ConnectionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -13,7 +13,7 @@ public protocol NetworkConnectionProtocol {
     /// result type
     var stateUpdateHandler: (NetworkConnectionResult) -> Void { get set }
     
-    /// create a new connection with 'NetworKit'
+    /// create a new connection with 'ConnectionKit'
     /// - Parameters:
     ///   - host: the host to connect
     ///   - port: the port of the host
