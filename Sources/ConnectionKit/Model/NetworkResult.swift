@@ -3,6 +3,7 @@
 //  ConnectionKit
 //
 //  Created by Vinzenz Weist on 09.06.21.
+//  Copyright © 2021 Vinzenz Weist. All rights reserved.
 //
 
 import Foundation
