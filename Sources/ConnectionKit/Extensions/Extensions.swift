@@ -9,6 +9,19 @@
 import Foundation
 import Network
 
+// MARK: - Atomic -
+
+internal class Atomic<Value> {
+    private let queue = DispatchQueue(label: UUID().uuidString)
+    private var storage: Value
+    internal var value: Value { get { queue.sync { storage } } }
+    
+    internal init(_ value: Value) { storage = value }
+    internal func mutate(_ transform: (inout Value) -> Void) { queue.sync { transform(&storage) } }
+}
+
+// MARK: - Timer -
+
 internal extension Timer {
     /// create a timeout
     /// - Parameters:
@@ -24,11 +37,11 @@ internal extension Timer {
     }
 }
 
+// MARK: - Data Type Extensions -
+
 internal extension UInt32 {
     /// convert integer to data with bigEndian
-    var bigEndianBytes: Data {
-        withUnsafeBytes(of: self.bigEndian) { bytes in Data(bytes) }
-    }
+    var bigEndianBytes: Data { withUnsafeBytes(of: self.bigEndian) { Data($0) } }
 }
 
 internal extension Int {
@@ -45,9 +58,7 @@ internal extension Data {
     var chunks: [Data] {
         var size = self.count / 0xFF
         size = Swift.max(size, 0x2000)
-        return stride(from: .zero, to: self.count, by: size).map { count in
-            Data(self[count..<Swift.min(count + size, self.count)])
-        }
+        return stride(from: .zero, to: self.count, by: size).map { Data(self[$0..<Swift.min($0 + size, self.count)]) }
     }
     
     /// func to extract integers from data as big endian

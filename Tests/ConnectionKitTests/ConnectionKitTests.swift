@@ -14,7 +14,7 @@ private enum TestCase {
 }
 
 class ConnectionKitTests: XCTestCase {
-    private var connection = NetworkConnection(host: "sheldon.network-co.de", port: 7878)
+    private var connection = NetworkConnection(host: "localhost", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private var cases: TestCase? = nil

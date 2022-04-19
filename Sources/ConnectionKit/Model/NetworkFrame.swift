@@ -9,10 +9,10 @@
 import Foundation
 
 internal final class NetworkFrame: NetworkFrameProtocol {
-    private var buffer = Data()
+    private var buffer = Atomic<Data>(.init())
     private let overheadByteCount = Int(0x5)
     private let frameByteCount = Int(UInt32.max)
-    internal func reset() { buffer = Data() }
+    internal func reset() { buffer.mutate { $0 = Data() } }
     
     /// create a protocol conform message frame
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
@@ -32,18 +32,22 @@ internal final class NetworkFrame: NetworkFrameProtocol {
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
     internal func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
-        buffer.append(data)
+        buffer.mutate { $0.append(data) }
         guard let length = extractSize() else { return }
-        guard buffer.count <= frameByteCount else { completion(nil, NetworkFrameError.readBufferOverflow); return }
-        guard buffer.count >= overheadByteCount, buffer.count >= length else { return }
-        while buffer.count >= length && length != .zero {
-            guard let bytes = extractMessage(data: buffer) else { completion(nil, NetworkFrameError.parsingFailed); return }
-            switch buffer.first {
+        guard buffer.value.count <= frameByteCount else { completion(nil, NetworkFrameError.readBufferOverflow); return }
+        guard buffer.value.count >= overheadByteCount, buffer.value.count >= length else { return }
+        while buffer.value.count >= length && length != .zero {
+            guard let bytes = extractMessage(data: buffer.value) else { completion(nil, NetworkFrameError.parsingFailed); return }
+            switch buffer.value.first {
             case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
             case NetworkOpcodes.ping.rawValue: completion(UInt16(bytes.count), nil)
             case NetworkOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(result, nil)
             default: completion(nil, NetworkFrameError.parsingFailed) }
-            if buffer.count <= length { buffer = Data() } else { buffer = Data(buffer[length...]) }
+            if buffer.value.count <= length {
+                buffer.mutate { $0 = Data() }
+            } else {
+                buffer.mutate { $0 = Data(buffer.value[length...]) }
+            }
         }
     }
 }
@@ -54,8 +58,8 @@ private extension NetworkFrame {
     // extract the message frame size from the data
     // if not possible it returns nil
     private func extractSize() -> UInt32? {
-        guard buffer.count >= overheadByteCount else { return nil }
-        let size = Data(buffer[1...overheadByteCount - 1])
+        guard buffer.value.count >= overheadByteCount else { return nil }
+        let size = Data(buffer.value[1...overheadByteCount - 1])
         return size.bigEndian
     }
     
