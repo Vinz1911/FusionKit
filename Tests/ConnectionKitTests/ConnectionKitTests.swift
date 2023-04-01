@@ -15,7 +15,7 @@ private enum TestCase {
 }
 
 class ConnectionKitTests: XCTestCase {
-    private var connection = NetworkConnection(host: "127.0.01", port: 7878)
+    private var connection = NetworkConnection(host: "127.0.0.1", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private var cases: TestCase? = nil
@@ -40,18 +40,6 @@ class ConnectionKitTests: XCTestCase {
     /// start test sending single ping message
     func testPingMessage() {
         cases = .ping; start()
-    }
-    
-    // MARK: - Internal Testing
-    
-    func testMessage() {
-        let frame = NetworkFrame()
-        let data = frame.create(message: "Hello World! This is Fusion!")
-        guard let messageData = data.data else { return }
-        frame.parse(data: messageData) { message, error in
-            if let message = message { print("got message: \(message)") }
-            if let error = error { print("got error: \(error)") }
-        }
     }
 }
 
