@@ -35,9 +35,9 @@ internal final class NetworkFrame: NetworkFrameProtocol {
         buffer.mutate { $0.append(data) }
         guard let length = extractSize() else { return }
         guard buffer.value.count <= NetworkCounts.frame.rawValue else { completion(nil, NetworkFrameError.readBufferOverflow); return }
-        guard buffer.value.count >= NetworkCounts.overhead.rawValue, buffer.count >= length else { return }
+        guard buffer.value.count >= NetworkCounts.overhead.rawValue, buffer.value.count >= length else { return }
         while buffer.value.count >= length && length != .zero {
-            guard SHA256.hash(data: buffer.prefix(NetworkCounts.control.rawValue)) == extractHash() else { completion(nil, NetworkFrameError.hashMismatch); return }
+            guard SHA256.hash(data: buffer.value.prefix(NetworkCounts.control.rawValue)) == extractHash() else { completion(nil, NetworkFrameError.hashMismatch); return }
             guard let bytes = extractMessage() else { completion(nil, NetworkFrameError.parsingFailed); return }
             switch buffer.value.first {
             case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
@@ -55,8 +55,8 @@ private extension NetworkFrame {
     // extract the message hash from the data
     // if not possible it returns nil
     private func extractHash() -> SHA256Digest? {
-        guard buffer.count >= NetworkCounts.overhead.rawValue else { return nil }
-        let hash = buffer.subdata(in: NetworkCounts.control.rawValue..<NetworkCounts.overhead.rawValue).withUnsafeBytes { $0.load(as: SHA256.Digest.self) }
+        guard buffer.value.count >= NetworkCounts.overhead.rawValue else { return nil }
+        let hash = buffer.value.subdata(in: NetworkCounts.control.rawValue..<NetworkCounts.overhead.rawValue).withUnsafeBytes { $0.load(as: SHA256.Digest.self) }
         return hash
     }
     
@@ -64,16 +64,16 @@ private extension NetworkFrame {
     // if not possible it returns nil
     private func extractSize() -> UInt32? {
         guard buffer.value.count >= NetworkCounts.overhead.rawValue else { return nil }
-        let size = buffer.subdata(in: NetworkCounts.opcode.rawValue..<NetworkCounts.control.rawValue)
+        let size = buffer.value.subdata(in: NetworkCounts.opcode.rawValue..<NetworkCounts.control.rawValue)
         return size.bigEndian
     }
     
     // extract the message and remove the overhead
     // if not possible it returns nil
     private func extractMessage() -> Data? {
-        guard buffer.count >= NetworkCounts.overhead.rawValue else { return nil }
+        guard buffer.value.count >= NetworkCounts.overhead.rawValue else { return nil }
         guard let length = extractSize() else { return nil }
         guard length > NetworkCounts.overhead.rawValue else { return Data() }
-        return buffer.subdata(in: NetworkCounts.overhead.rawValue..<Int(length))
+        return buffer.value.subdata(in: NetworkCounts.overhead.rawValue..<Int(length))
     }
 }
