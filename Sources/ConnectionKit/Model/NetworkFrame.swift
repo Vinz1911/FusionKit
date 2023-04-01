@@ -11,8 +11,8 @@ import CryptoKit
 
 
 internal final class NetworkFrame: NetworkFrameProtocol {
-    private var buffer = Data()
-    internal func reset() { buffer = Data() }
+    private var buffer = Atomic<Data>(.init())
+    internal func reset() { buffer.mutate { $0 = Data() } }
     
     /// create a protocol conform message frame
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
@@ -32,19 +32,19 @@ internal final class NetworkFrame: NetworkFrameProtocol {
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
     internal func parse(data: Data, _ completion: (NetworkMessage?, Error?) -> Void) {
-        buffer.append(data)
+        buffer.mutate { $0.append(data) }
         guard let length = extractSize() else { return }
-        guard buffer.count <= NetworkCounts.frame.rawValue else { completion(nil, NetworkFrameError.readBufferOverflow); return }
-        guard buffer.count >= NetworkCounts.overhead.rawValue, buffer.count >= length else { return }
-        while buffer.count >= length && length != .zero {
+        guard buffer.value.count <= NetworkCounts.frame.rawValue else { completion(nil, NetworkFrameError.readBufferOverflow); return }
+        guard buffer.value.count >= NetworkCounts.overhead.rawValue, buffer.count >= length else { return }
+        while buffer.value.count >= length && length != .zero {
             guard SHA256.hash(data: buffer.prefix(NetworkCounts.control.rawValue)) == extractHash() else { completion(nil, NetworkFrameError.hashMismatch); return }
             guard let bytes = extractMessage() else { completion(nil, NetworkFrameError.parsingFailed); return }
-            switch buffer.first {
+            switch buffer.value.first {
             case NetworkOpcodes.binary.rawValue: completion(bytes, nil)
             case NetworkOpcodes.ping.rawValue: completion(UInt16(bytes.count), nil)
             case NetworkOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(result, nil)
             default: completion(nil, NetworkFrameError.parsingFailed) }
-            if buffer.count <= length { buffer = Data() } else { buffer = buffer[length...] }
+            if buffer.value.count <= length { buffer.mutate { $0 = Data() } } else { buffer.mutate { $0 = Data(buffer.value[length...]) } }
         }
     }
 }
@@ -63,7 +63,7 @@ private extension NetworkFrame {
     // extract the message frame size from the data
     // if not possible it returns nil
     private func extractSize() -> UInt32? {
-        guard buffer.count >= NetworkCounts.overhead.rawValue else { return nil }
+        guard buffer.value.count >= NetworkCounts.overhead.rawValue else { return nil }
         let size = buffer.subdata(in: NetworkCounts.opcode.rawValue..<NetworkCounts.control.rawValue)
         return size.bigEndian
     }
