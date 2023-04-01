@@ -15,3 +15,11 @@ internal enum NetworkOpcodes: UInt8 {
     case binary = 0x2
     case ping = 0x3
 }
+
+// protocol byte counts
+internal enum NetworkCounts: Int {
+    case opcode = 0x1
+    case control = 0x5
+    case overhead = 0x25
+    case frame = 0xFFFFFFFF
+}

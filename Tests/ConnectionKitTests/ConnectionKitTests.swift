@@ -7,6 +7,7 @@
 //
 
 import XCTest
+import CryptoKit
 @testable import ConnectionKit
 
 private enum TestCase {
@@ -14,7 +15,7 @@ private enum TestCase {
 }
 
 class ConnectionKitTests: XCTestCase {
-    private var connection = NetworkConnection(host: "localhost", port: 7878)
+    private var connection = NetworkConnection(host: "127.0.0.1", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private var cases: TestCase? = nil

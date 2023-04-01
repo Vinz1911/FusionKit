@@ -25,12 +25,14 @@ public enum NetworkConnectionError: Error {
 
 /// network frame specific errors
 public enum NetworkFrameError: Error {
+    case hashMismatch
     case parsingFailed
     case readBufferOverflow
     case writeBufferOverflow
     
     public var description: String {
         switch self {
+        case .hashMismatch: return "message hash does not match"
         case .parsingFailed: return "message parsing failed"
         case .readBufferOverflow: return "read buffer overflow"
         case .writeBufferOverflow: return "write buffer overflow"
