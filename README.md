@@ -1,9 +1,9 @@
-# ConnectionKit
+# FusionKit
 
-`ConnectionKit` is a library which implements the `NWC-Protocol`. The `NWC-Protocol` is proprietary networking protocol which uses a small and lightweight header with a performance as fast as raw tcp performance. Built directly on top of Apples `Network.framework` with support for plain tcp and tls encrypted connections. The implementation for the host is [Network-GO](https://github.com/Vinz1911/network-go) written in golang with awesome concurrency support to ensure maximum performance.
+`FusionKit` is a library which implements the `FNConnection-Protocol`. The `FNConnection-Protocol` is proprietary networking protocol which uses a small and lightweight header with a performance as fast as raw tcp performance. Built directly on top of Apples `Network.framework` with support for plain tcp and tls encrypted connections. The implementation for the host is [Network](https://github.com/Vinz1911/network) written in golang with awesome concurrency support to ensure maximum performance.
 
 ## License:
-[![License](https://img.shields.io/badge/license-GPLv3-blue.svg?longCache=true&style=flat)](https://github.com/Vinz1911/ConnectionKit/blob/main/LICENSE)
+[![License](https://img.shields.io/badge/license-GPLv3-blue.svg?longCache=true&style=flat)](https://github.com/Vinz1911/FusionKit/blob/main/LICENSE)
 
 ## Swift Version:
 [![Swift 5.5](https://img.shields.io/badge/Swift-5.5-orange.svg?logo=swift&style=flat)](https://swift.org) [![Swift 5.5](https://img.shields.io/badge/SPM-Support-orange.svg?logo=swift&style=flat)](https://swift.org)
@@ -15,13 +15,13 @@
 ## Import:
 ```swift
 // import the Framework
-import ConnectionKit
+import FusionKit
 
 // create a new connection
-let connection = NetworkConnection(host: "example.com", port: 8080)
+let connection = FNConnection(host: "example.com", port: 8080)
 
 // support for NWParameters, tls example:
-let connection = NetworkConnection(host: "example.com", port: 8080, parameters: .tls)
+let connection = FNConnection(host: "example.com", port: 8080, parameters: .tls)
 
 // ...
 ```
@@ -29,10 +29,10 @@ let connection = NetworkConnection(host: "example.com", port: 8080, parameters: 
 ## Callback:
 ```swift
 // import the Framework
-import ConnectionKit
+import FusionKit
 
 // create a new connection
-let connection = NetworkConnection(host: "example.com", port: 8080)
+let connection = FNConnection(host: "example.com", port: 8080)
 
 // state update handler
 connection.stateUpdateHandler = { state in
@@ -57,10 +57,10 @@ connection.start()
 ## Send Messages:
 ```swift
 // import the Framework
-import ConnectionKit
+import FusionKit
 
 // create a new connection
-let connection = NetworkConnection(host: "example.com", port: 8080)
+let connection = FNConnection(host: "example.com", port: 8080)
 
 // the framework accepts generic data types
 // send strings

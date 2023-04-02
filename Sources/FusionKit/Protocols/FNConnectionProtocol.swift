@@ -1,6 +1,6 @@
 //
-//  NetworkConnectionProtocol.swift
-//  ConnectionKit
+//  FNConnectionProtocol.swift
+//  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -9,11 +9,11 @@
 import Foundation
 import Network
 
-public protocol NetworkConnectionProtocol {
+public protocol FNConnectionProtocol {
     /// result type
-    var stateUpdateHandler: (NetworkConnectionResult) -> Void { get set }
+    var stateUpdateHandler: (FNConnectionResult) -> Void { get set }
     
-    /// create a new connection with 'ConnectionKit'
+    /// create a new connection with 'FusionKit'
     /// - Parameters:
     ///   - host: the host to connect
     ///   - port: the port of the host
@@ -31,5 +31,5 @@ public protocol NetworkConnectionProtocol {
     
     /// send messages to a connected host
     /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
-    func send<T: NetworkMessage>(message: T)
+    func send<T: FNConnectionMessage>(message: T)
 }
