@@ -1,6 +1,6 @@
 //
-//  NetworkError.swift
-//  ConnectionKit
+//  FNConnectionError.swift
+//  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -9,7 +9,7 @@
 import Foundation
 
 /// network connection specific errors
-public enum NetworkConnectionError: Error {
+public enum FNConnectionError: Error {
     case missingHost
     case missingPort
     case connectionTimeout
@@ -24,7 +24,7 @@ public enum NetworkConnectionError: Error {
 }
 
 /// network frame specific errors
-public enum NetworkFrameError: Error {
+public enum FNConnectionFrameError: Error {
     case hashMismatch
     case parsingFailed
     case readBufferOverflow

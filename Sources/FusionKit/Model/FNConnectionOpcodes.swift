@@ -1,6 +1,6 @@
 //
-//  NetworkOpcodes.swift
-//  ConnectionKit
+//  FNConnectionOpcodes.swift
+//  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -9,7 +9,7 @@
 import Foundation
 
 /// opcodes for framing
-internal enum NetworkOpcodes: UInt8 {
+internal enum FNConnectionOpcodes: UInt8 {
     case none = 0x0
     case text = 0x1
     case binary = 0x2
@@ -17,7 +17,7 @@ internal enum NetworkOpcodes: UInt8 {
 }
 
 // protocol byte counts
-internal enum NetworkCounts: Int {
+internal enum FNConnectionCounts: Int {
     case opcode = 0x1
     case control = 0x5
     case overhead = 0x25

@@ -1,21 +1,12 @@
-//
-//  ConnectionKitTests.swift.swift
-//  ConnectionKit
-//
-//  Created by Vinzenz Weist on 07.06.21.
-//  Copyright © 2021 Vinzenz Weist. All rights reserved.
-//
-
 import XCTest
-import CryptoKit
-@testable import ConnectionKit
+@testable import FusionKit
 
 private enum TestCase {
     case string; case data; case ping
 }
 
-class ConnectionKitTests: XCTestCase {
-    private var connection = NetworkConnection(host: "127.0.0.1", port: 7878)
+class FusionKitTests: XCTestCase {
+    private var connection = FNConnection(host: "127.0.0.1", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private var cases: TestCase? = nil
@@ -45,7 +36,7 @@ class ConnectionKitTests: XCTestCase {
 
 // MARK: - Private API Extension -
 
-private extension ConnectionKitTests {
+private extension FusionKitTests {
     /// create a connection and start
     private func start() {
         stateUpdateHandler(connection: connection)
@@ -55,7 +46,7 @@ private extension ConnectionKitTests {
     
     /// state update handler for connection
     /// - Parameter connection: instance of 'NetworkConnection'
-    private func stateUpdateHandler(connection: NetworkConnection) {
+    private func stateUpdateHandler(connection: FNConnection) {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self = self else { return }
             switch state {

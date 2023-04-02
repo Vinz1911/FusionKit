@@ -1,6 +1,6 @@
 //
-//  NetworkConnection.swift
-//  ConnectionKit
+//  FNConnection.swift
+//  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
 //  Copyright © 2021 Vinzenz Weist. All rights reserved.
@@ -9,22 +9,22 @@
 import Foundation
 import Network
 
-public final class NetworkConnection: NetworkConnectionProtocol {
-    public var stateUpdateHandler: (NetworkConnectionResult) -> Void = { _ in }
-    private var frame = NetworkFrame()
+public final class FNConnection: FNConnectionProtocol {
+    public var stateUpdateHandler: (FNConnectionResult) -> Void = { _ in }
+    private var frame = FNConnectionFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
     private var timer: DispatchSourceTimer?
     
-    /// create a new connection with 'ConnectionKit'
+    /// create a new connection with 'FusionKit'
     /// - Parameters:
     ///   - host: the host name
     ///   - port: the host port
     ///   - parameters: network parameters
     ///   - queue: dispatch queue
     public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString)) {
-        if host.isEmpty { fatalError(NetworkConnectionError.missingHost.description) }
-        if port == .zero { fatalError(NetworkConnectionError.missingPort.description) }
+        if host.isEmpty { fatalError(FNConnectionError.missingHost.description) }
+        if port == .zero { fatalError(FNConnectionError.missingPort.description) }
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
         self.queue = queue
     }
@@ -44,7 +44,7 @@ public final class NetworkConnection: NetworkConnectionProtocol {
     
     /// send messages to a connected host
     /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
-    public func send<T: NetworkMessage>(message: T) {
+    public func send<T: FNConnectionMessage>(message: T) {
         let message = frame.create(message: message)
         if let error = message.error { stateUpdateHandler(.failed(error)); cleanup() }
         guard let data = message.data else { return }
@@ -56,14 +56,14 @@ public final class NetworkConnection: NetworkConnectionProtocol {
 
 // MARK: - Private API -
 
-private extension NetworkConnection {
+private extension FNConnection {
     /// start timeout and cancel connection
     /// if timeout value is reached
     private func timeout() {
         self.timer = Timer.timeout { [weak self] in
             guard let self = self else { return }
             self.cleanup()
-            self.stateUpdateHandler(.failed(NetworkConnectionError.connectionTimeout))
+            self.stateUpdateHandler(.failed(FNConnectionError.connectionTimeout))
         }
     }
     
@@ -79,7 +79,7 @@ private extension NetworkConnection {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
                 guard let self = self else { return }
-                self.stateUpdateHandler(.bytes(NetworkBytes(output: data.count)))
+                self.stateUpdateHandler(.bytes(FNConnectionBytes(output: data.count)))
                 guard let error = error, error != NWError.posix(.ECANCELED) else { return }
                 self.stateUpdateHandler(.failed(error))
             })
@@ -94,7 +94,7 @@ private extension NetworkConnection {
             guard let error = error else { return }
             stateUpdateHandler(.failed(error)); cleanup()
         }
-        stateUpdateHandler(.bytes(NetworkBytes(input: data.count)))
+        stateUpdateHandler(.bytes(FNConnectionBytes(input: data.count)))
     }
     
     /// clean and cancel connection
