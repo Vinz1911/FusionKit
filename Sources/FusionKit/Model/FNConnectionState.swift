@@ -1,5 +1,5 @@
 //
-//  FNConnectionResult.swift
+//  FNConnectionState.swift
 //  FusionKit
 //
 //  Created by Vinzenz Weist on 09.06.21.
@@ -15,7 +15,7 @@ public struct FNConnectionBytes {
 }
 
 /// network connection result type
-public enum FNConnectionResult {
+public enum FNConnectionState {
     case ready
     case cancelled
     case failed(Error?)
