@@ -10,7 +10,7 @@ import Foundation
 import Network
 
 public final class FNConnection: FNConnectionProtocol {
-    public var stateUpdateHandler: (FNConnectionResult) -> Void = { _ in }
+    public var stateUpdateHandler: (FNConnectionState) -> Void = { _ in }
     private var frame = FNConnectionFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection

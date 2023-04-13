@@ -1,5 +1,5 @@
 //
-//  NetworkFrameProtocol.swift
+//  FNConnectionFrameProtocol.swift
 //  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.

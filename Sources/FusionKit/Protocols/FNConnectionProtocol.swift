@@ -11,7 +11,7 @@ import Network
 
 public protocol FNConnectionProtocol {
     /// result type
-    var stateUpdateHandler: (FNConnectionResult) -> Void { get set }
+    var stateUpdateHandler: (FNConnectionState) -> Void { get set }
     
     /// create a new connection with 'FusionKit'
     /// - Parameters:
