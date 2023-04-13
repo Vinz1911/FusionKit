@@ -9,9 +9,9 @@ This document specifies a new binary framing protocol, called Fusion Framing Pro
 1. Introduction
 2. Protocol Overview
 3. Framing
-   3.1 Frame Format
-   3.2 Frame Types
-   3.3 Control Frames
+  - 3.1 Frame Format
+  - 3.2 Frame Types
+  - 3.3 Control Frames
 4. Message Handling
 5. Security Considerations
 6. IANA Considerations
