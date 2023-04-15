@@ -52,6 +52,21 @@ class FusionKitTests: XCTestCase {
         guard let message = uuid.data(using: .utf8) else { return }
         framer(message: message)
     }
+    
+    /// start test error description mapping
+    func testErrorDescription() {
+        XCTAssertEqual(FNConnectionError.missingHost.description, "missing host")
+        XCTAssertEqual(FNConnectionError.missingPort.description, "missing port")
+        XCTAssertEqual(FNConnectionError.connectionTimeout.description, "connection timeout")
+        
+        XCTAssertEqual(FNConnectionFrameError.hashMismatch.description, "message hash does not match")
+        XCTAssertEqual(FNConnectionFrameError.parsingFailed.description, "message parsing failed")
+        XCTAssertEqual(FNConnectionFrameError.readBufferOverflow.description, "read buffer overflow")
+        XCTAssertEqual(FNConnectionFrameError.writeBufferOverflow.description, "write buffer overflow")
+        
+        exp?.fulfill()
+        wait(for: [exp!], timeout: timeout)
+    }
 }
 
 // MARK: - Private API Extension -
