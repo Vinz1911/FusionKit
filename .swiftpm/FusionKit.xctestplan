@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "C42AF930-2F5A-428B-BF99-AD409F76BD33",
+      "name" : "Test Schema",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "FusionKitTests",
+        "name" : "FusionKitTests"
+      }
+    }
+  ],
+  "version" : 1
+}
