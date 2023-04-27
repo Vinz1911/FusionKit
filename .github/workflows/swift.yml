@@ -33,9 +33,9 @@ jobs:
 
     - name: Convert Swift package coverage to Cobertura format
       run: |
-        slather coverage --input-format profdata --cobertura-xml --output-directory coverage --binary-basename Package --scheme YourPackageName ./.build/debug/codecov/YourPackageName.build
+        slather coverage --input-format profdata --cobertura-xml --output-directory coverage --binary-basename Package --scheme FusionKit ./.build/debug/codecov/FusionKit.build
       env:
-        SLATHER_PROFdata_PATH: .build/debug/codecov/YourPackageName.build/ProfileData
+        SLATHER_PROFdata_PATH: .build/debug/codecov/FusionKit.build/ProfileData
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
