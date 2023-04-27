@@ -16,23 +16,18 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Build and Test with Code Coverage
       run: |
         swift test --enable-code-coverage
-
-    - name: Find binary file
-      id: find_binary
-      run: |
-        echo "::set-output name=binary_path::$(find . -name "*.xctest" | head -n 1)"
     
     - name: Generate lcov coverage report
       run: |
-        xcrun llvm-cov report ${{ steps.find_binary.outputs.binary_path }}/Contents/MacOS/FusionKitPackageTests -instr-profile .build/debug/codecov/default.profdata > info.lcov
+        xcrun llvm-cov export -format="lcov" .build/debug/FusionKitPackageTests.xctest/Contents/MacOS/FusionKitPackageTests -instr-profile .build/debug/codecov/default.profdata > info.lcov
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v2
+      uses: codecov/codecov-action@v3
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: info.lcov
