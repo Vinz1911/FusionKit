@@ -27,15 +27,17 @@ jobs:
       run: |
         gem install slather
 
+    - name: Generate Xcode project from Swift package
+      run: |
+        swift package generate-xcodeproj
+
     - name: Build and Test with Code Coverage
       run: |
-        swift test --enable-code-coverage
+        xcodebuild -project FusionKit.xcodeproj -scheme FusionKit-Package -destination 'platform=iOS Simulator,name=iPhone 13,OS=latest' -enableCodeCoverage YES test
 
-    - name: Convert Swift package coverage to Cobertura format
+    - name: Generate coverage report using Slather
       run: |
-        slather coverage --input-format profdata --cobertura-xml --output-directory coverage --binary-basename Package --scheme FusionKit ./.build/debug/codecov/FusionKit.build
-      env:
-        SLATHER_PROFdata_PATH: .build/debug/codecov/FusionKit.build/ProfileData
+        slather coverage --cobertura-xml --output-directory coverage --scheme FusionKit-Package FusionKit.xcodeproj
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
@@ -43,3 +45,4 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: coverage/cobertura.xml
         fail_ci_if_error: true
+
