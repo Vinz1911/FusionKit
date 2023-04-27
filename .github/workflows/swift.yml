@@ -1,22 +1,45 @@
 # This workflow will build a Swift project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-swift
-
-name: Swift
+name: Build and Test
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
-  build:
+  build-and-test:
     runs-on: macos-latest
+
     steps:
-    - uses: actions/checkout@v3
-    - name: Build
-      run: swift build -v
-    - name: Run tests
-      run: swift test --enable-code-coverage
-    - name: Upload coverage reports to Codecov
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: 3.0.0
+
+    - name: Install slather
+      run: |
+        gem install slather
+
+    - name: Build and Test with Code Coverage
+      run: |
+        swift test --enable-code-coverage
+
+    - name: Convert Swift package coverage to Cobertura format
+      run: |
+        slather coverage --input-format profdata --cobertura-xml --output-directory coverage --binary-basename Package --scheme YourPackageName ./.build/debug/codecov/YourPackageName.build
+      env:
+        SLATHER_PROFdata_PATH: .build/debug/codecov/YourPackageName.build/ProfileData
+
+    - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage/cobertura.xml
+        fail_ci_if_error: true
