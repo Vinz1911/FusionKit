@@ -14,7 +14,7 @@ private enum TestCase {
 }
 
 class FusionKitTests: XCTestCase {
-    private var connection = FNConnection(host: "127.0.0.1", port: 7878)
+    private var connection = FNConnection(host: "atonet.de", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private let uuid = UUID().uuidString
