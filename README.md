@@ -8,6 +8,9 @@
 ## Swift Version:
 [![Swift 5.5](https://img.shields.io/badge/Swift-5.5-orange.svg?logo=swift&style=flat)](https://swift.org) [![Swift 5.5](https://img.shields.io/badge/SPM-Support-orange.svg?logo=swift&style=flat)](https://swift.org)
 
+## Coverage:
+[![codecov](https://codecov.io/github/Vinz1911/FusionKit/branch/main/graph/badge.svg?token=EE3S0BOINS)](https://codecov.io/github/Vinz1911/FusionKit)
+
 ## Installation:
 ### Swift Packages
 [Swift Package Manager](https://developer.apple.com/documentation/swift_packages). Just add this repo to your project.
