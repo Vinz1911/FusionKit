@@ -14,6 +14,7 @@ public final class FNConnection: FNConnectionProtocol {
     private var frame = FNConnectionFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
+    private var monitor = NWPathMonitor()
     private var timer: DispatchSourceTimer?
     
     /// create a new connection with 'FusionKit'
@@ -32,8 +33,8 @@ public final class FNConnection: FNConnectionProtocol {
     /// start a connection to a host
     /// creates a async tcp connection
     public func start() {
-        timeout(); handler(); receive()
-        connection.start(queue: queue)
+        timeout(); handler(); receive(); satisfied()
+        monitor.start(queue: .init(label: UUID().uuidString))
     }
     
     /// cancel the connection
@@ -71,6 +72,17 @@ private extension FNConnection {
     private func invalidate() {
         guard let timer = self.timer else { return }
         timer.cancel(); self.timer = nil
+    }
+    
+    /// check if path is available
+    private func satisfied() {
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self = self else { return }
+            switch path.status {
+            case .satisfied: self.connection.start(queue: self.queue)
+            case .unsatisfied: self.connection.cancel()
+            default: break }
+        }
     }
     
     /// process message data and send it to a host
