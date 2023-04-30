@@ -62,25 +62,24 @@ private extension FNConnection {
     /// if timeout value is reached
     private func timeout() {
         self.timer = Timer.timeout { [weak self] in
-            guard let self = self else { return }
-            self.cleanup()
-            self.stateUpdateHandler(.failed(FNConnectionError.connectionTimeout))
+            guard let self else { return }
+            cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionTimeout))
         }
     }
     
     /// cancel a running timeout
     private func invalidate() {
-        guard let timer = self.timer else { return }
+        guard let timer else { return }
         timer.cancel(); self.timer = nil
     }
     
     /// check if path is available
     private func satisfied() {
         monitor.pathUpdateHandler = { [weak self] path in
-            guard let self = self else { return }
+            guard let self else { return }
             switch path.status {
-            case .satisfied: self.connection.start(queue: self.queue)
-            case .unsatisfied: self.connection.cancel()
+            case .satisfied: connection.start(queue: queue)
+            case .unsatisfied: cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionUnsatisfied))
             default: break }
         }
     }
@@ -90,9 +89,9 @@ private extension FNConnection {
     private func processing(with data: Data) {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
-                guard let self = self else { return }
+                guard let self else { return }
                 self.stateUpdateHandler(.bytes(FNConnectionBytes(output: data.count)))
-                guard let error = error, error != NWError.posix(.ECANCELED) else { return }
+                guard let error, error != NWError.posix(.ECANCELED) else { return }
                 self.stateUpdateHandler(.failed(error))
             })
         }
@@ -102,8 +101,8 @@ private extension FNConnection {
     /// - Parameter data: message data
     private func processing(from data: Data) {
         frame.parse(data: data) { message, error in
-            if let message = message { stateUpdateHandler(.message(message)) }
-            guard let error = error else { return }
+            if let message { stateUpdateHandler(.message(message)) }
+            guard let error else { return }
             stateUpdateHandler(.failed(error)); cleanup()
         }
         stateUpdateHandler(.bytes(FNConnectionBytes(input: data.count)))
@@ -113,7 +112,7 @@ private extension FNConnection {
     /// clear instance
     private func cleanup() {
         queue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
+            guard let self else { return }
             self.invalidate()
             self.connection.cancel()
             self.frame.reset()
@@ -124,7 +123,7 @@ private extension FNConnection {
     /// handles different network connection states
     private func handler() {
         connection.stateUpdateHandler = { [weak self] state in
-            guard let self = self else { return }
+            guard let self else { return }
             switch state {
             case .cancelled: self.stateUpdateHandler(.cancelled)
             case .failed(let error), .waiting(let error): self.stateUpdateHandler(.failed(error)); self.cleanup()
@@ -137,13 +136,13 @@ private extension FNConnection {
     private func receive() {
         connection.batch {
             connection.receive(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
-                guard let self = self else { return }
-                if let error = error {
+                guard let self else { return }
+                if let error {
                     guard error != NWError.posix(.ECANCELED) else { return }
                     self.stateUpdateHandler(.failed(error)); self.cleanup()
                     return
                 }
-                if let data = data { self.processing(from: data) }
+                if let data { self.processing(from: data) }
                 if isComplete { self.cleanup() } else { self.receive() }
             }
         }

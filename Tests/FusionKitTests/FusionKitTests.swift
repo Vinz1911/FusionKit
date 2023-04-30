@@ -58,6 +58,7 @@ class FusionKitTests: XCTestCase {
         XCTAssertEqual(FNConnectionError.missingHost.description, "missing host")
         XCTAssertEqual(FNConnectionError.missingPort.description, "missing port")
         XCTAssertEqual(FNConnectionError.connectionTimeout.description, "connection timeout")
+        XCTAssertEqual(FNConnectionError.connectionUnsatisfied.description, "connection path is not satisfied")
         
         XCTAssertEqual(FNConnectionFrameError.hashMismatch.description, "message hash does not match")
         XCTAssertEqual(FNConnectionFrameError.parsingFailed.description, "message parsing failed")
@@ -90,7 +91,7 @@ private extension FusionKitTests {
         framer.parse(data: data) { message, error in
             if case let message as String = message { XCTAssertEqual(message, uuid); self.exp?.fulfill() }
             if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); self.exp?.fulfill() }
-            if let error = error { XCTFail("failed with error: \(error)") }
+            if let error { XCTFail("failed with error: \(error)") }
         }
         wait(for: [exp!], timeout: timeout)
     }
@@ -99,7 +100,7 @@ private extension FusionKitTests {
     /// - Parameter connection: instance of 'NetworkConnection'
     private func stateUpdateHandler(connection: FNConnection, test: TestCase) {
         connection.stateUpdateHandler = { [weak self] state in
-            guard let self = self else { return }
+            guard let self else { return }
             switch state {
             case .ready:
                 if test == .string { connection.send(message: self.buffer) }
@@ -124,7 +125,7 @@ private extension FusionKitTests {
                 }
                 
             case .failed(let error):
-                guard let error = error else { return }
+                guard let error else { return }
                 XCTFail("failed with error: \(error)")
 
             default: break }
