@@ -27,7 +27,7 @@ let connection = FNConnection(host: "example.com", port: 8080, parameters: .tls)
 // ...
 ```
 
-## Callback:
+## State Handler:
 ```swift
 // import the Framework
 import FusionKit
@@ -44,10 +44,6 @@ connection.stateUpdateHandler = { state in
         // connection is cancelled
     case .failed(let error):
         // connection failed with error
-    case .message(let message):
-        // connection received message
-    case .bytes(let bytes):
-        // connection send/received bytes
     }
 }
 
@@ -69,11 +65,26 @@ connection.send(message: "Hello World!")
 
 // send data
 connection.send(message: Data(count: 100))
+
+// send ping
+connection.send(message: UInt16.max)
 ```
 
 ## Parse Message:
 ```swift
+// import the Framework
+import FusionKit
 
+// create a new connection
+let connection = FNConnection(host: "example.com", port: 8080)
+
+// read incoming messages and transmitted bytes count
+connection.receive { message, bytes in
+    if let message { print(message) }
+    if let bytes { print(bytes) }
+}
+
+connection.send(message: "Hello World! 👻")
 ```
 
 ## Author:
