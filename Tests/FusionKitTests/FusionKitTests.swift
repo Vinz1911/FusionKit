@@ -10,7 +10,9 @@ import XCTest
 @testable import FusionKit
 
 private enum TestCase {
-    case string; case data; case ping
+    case string
+    case data
+    case ping
 }
 
 class FusionKitTests: XCTestCase {
@@ -65,8 +67,9 @@ class FusionKitTests: XCTestCase {
         XCTAssertEqual(FNConnectionFrameError.readBufferOverflow.description, "read buffer overflow")
         XCTAssertEqual(FNConnectionFrameError.writeBufferOverflow.description, "write buffer overflow")
         
-        exp?.fulfill()
-        wait(for: [exp!], timeout: timeout)
+        guard let exp else { return }
+        exp.fulfill()
+        wait(for: [exp], timeout: timeout)
     }
 }
 
@@ -77,6 +80,10 @@ private extension FusionKitTests {
     /// - Parameter test: test case
     private func start(test: TestCase) {
         stateUpdateHandler(connection: connection, test: test)
+        connection.receive { [weak self] message, bytes in
+            guard let self else { return }
+            if let message { handleMessages(message: message) }
+        }
         connection.start()
         wait(for: [exp!], timeout: timeout)
     }
@@ -89,11 +96,32 @@ private extension FusionKitTests {
         guard let data = message.data else { XCTFail("failed to get message data"); return }
         
         framer.parse(data: data) { message, error in
-            if case let message as String = message { XCTAssertEqual(message, uuid); self.exp?.fulfill() }
-            if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); self.exp?.fulfill() }
+            if case let message as String = message { XCTAssertEqual(message, uuid); exp?.fulfill() }
+            if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp?.fulfill() }
             if let error { XCTFail("failed with error: \(error)") }
         }
         wait(for: [exp!], timeout: timeout)
+    }
+    
+    /// handles test routes for messages
+    /// - Parameter message: generic `FNConnectionMessage`
+    private func handleMessages(message: FNConnectionMessage) {
+        guard let exp else { return }
+        if case let message as UInt16 = message {
+            XCTAssertEqual(message, UInt16(buffer))
+            connection.cancel()
+            exp.fulfill()
+        }
+        if case let message as Data = message {
+            XCTAssertEqual(message.count, Int(buffer))
+            connection.cancel()
+            exp.fulfill()
+        }
+        if case let message as String = message {
+            XCTAssertEqual(message, buffer)
+            connection.cancel()
+            exp.fulfill()
+        }
     }
     
     /// state update handler for connection
@@ -103,32 +131,13 @@ private extension FusionKitTests {
             guard let self else { return }
             switch state {
             case .ready:
-                if test == .string { connection.send(message: self.buffer) }
-                if test == .data { connection.send(message: Data(count: Int(self.buffer)!)) }
-                if test == .ping { connection.send(message: UInt16(self.buffer)!) }
-                
-            case .message(let message):
-                if case let message as UInt16 = message {
-                    XCTAssertEqual(message, UInt16(self.buffer))
-                    connection.cancel()
-                    self.exp?.fulfill()
-                }
-                if case let message as Data = message {
-                    XCTAssertEqual(message.count, Int(self.buffer))
-                    connection.cancel()
-                    self.exp?.fulfill()
-                }
-                if case let message as String = message {
-                    XCTAssertEqual(message, self.buffer)
-                    connection.cancel()
-                    self.exp?.fulfill()
-                }
-                
+                if test == .string { connection.send(message: buffer) }
+                if test == .data { connection.send(message: Data(count: Int(buffer) ?? 50000)) }
+                if test == .ping { connection.send(message: UInt16(buffer) ?? 50000) }
+            case .cancelled: break
             case .failed(let error):
                 guard let error else { return }
-                XCTFail("failed with error: \(error)")
-
-            default: break }
+                XCTFail("failed with error: \(error)") }
         }
     }
 }

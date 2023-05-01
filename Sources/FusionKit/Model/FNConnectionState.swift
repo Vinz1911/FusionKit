@@ -14,11 +14,15 @@ public struct FNConnectionBytes {
     public var output: Int?
 }
 
-/// network connection result type
+/// network connection state handler
 public enum FNConnectionState {
     case ready
     case cancelled
     case failed(Error?)
+}
+
+/// internal transmitter
+internal enum FNConnectionTransmitter {
     case message(FNConnectionMessage)
     case bytes(FNConnectionBytes)
 }

@@ -71,5 +71,10 @@ connection.send(message: "Hello World!")
 connection.send(message: Data(count: 100))
 ```
 
+## Parse Message:
+```swift
+
+```
+
 ## Author:
 👨🏼‍💻 [Vinzenz Weist](https://github.com/Vinz1911)
