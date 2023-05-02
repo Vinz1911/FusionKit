@@ -20,9 +20,3 @@ public enum FNConnectionState {
     case cancelled
     case failed(Error?)
 }
-
-/// internal transmitter
-internal enum FNConnectionTransmitter {
-    case message(FNConnectionMessage)
-    case bytes(FNConnectionBytes)
-}

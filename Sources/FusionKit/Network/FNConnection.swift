@@ -12,7 +12,7 @@ import Network
 public final class FNConnection: FNConnectionProtocol {
     public var stateUpdateHandler: (FNConnectionState) -> Void = { _ in }
     
-    private var transmitter: (FNConnectionTransmitter) -> Void = { _ in }
+    private var transmitter: (FNConnectionMessage?, FNConnectionBytes?) -> Void = { _, _ in }
     private var frame = FNConnectionFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
@@ -59,11 +59,7 @@ public final class FNConnection: FNConnectionProtocol {
     /// receive a message from a connected host
     /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
     public func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void {
-        transmitter = { state in
-            switch state {
-            case .message(let message): completion(message, nil)
-            case .bytes(let bytes): completion(nil, bytes) }
-        }
+        transmitter = completion
     }
 }
 
@@ -102,7 +98,7 @@ private extension FNConnection {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
                 guard let self else { return }
-                transmitter(.bytes(FNConnectionBytes(output: data.count)))
+                transmitter(nil, FNConnectionBytes(output: data.count))
                 guard let error, error != NWError.posix(.ECANCELED) else { return }
                 stateUpdateHandler(.failed(error))
             })
@@ -114,11 +110,11 @@ private extension FNConnection {
     private func processing(from data: Data) -> Void {
         frame.parse(data: data) { [weak self] message, error in
             guard let self else { return }
-            if let message { transmitter(.message(message)) }
+            if let message { transmitter(message, nil) }
             guard let error else { return }
             stateUpdateHandler(.failed(error)); cleanup()
         }
-        transmitter(.bytes(FNConnectionBytes(input: data.count)))
+        transmitter(nil, FNConnectionBytes(input: data.count))
     }
     
     /// clean and cancel connection
