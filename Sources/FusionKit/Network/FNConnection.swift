@@ -11,9 +11,12 @@ import Network
 
 public final class FNConnection: FNConnectionProtocol {
     public var stateUpdateHandler: (FNConnectionState) -> Void = { _ in }
+    
+    private var transmitter: (FNConnectionMessage?, FNConnectionBytes?) -> Void = { _, _ in }
     private var frame = FNConnectionFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
+    private var monitor = NWPathMonitor()
     private var timer: DispatchSourceTimer?
     
     /// create a new connection with 'FusionKit'
@@ -31,26 +34,32 @@ public final class FNConnection: FNConnectionProtocol {
     
     /// start a connection to a host
     /// creates a async tcp connection
-    public func start() {
-        timeout(); handler(); receive()
-        connection.start(queue: queue)
+    public func start() -> Void {
+        timeout(); handler(); receive(); satisfied()
+        monitor.start(queue: .init(label: UUID().uuidString))
     }
     
     /// cancel the connection
     /// closes the tcp connection and cleanup
-    public func cancel() {
+    public func cancel() -> Void {
         cleanup()
     }
     
     /// send messages to a connected host
     /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
-    public func send<T: FNConnectionMessage>(message: T) {
+    public func send<T: FNConnectionMessage>(message: T) -> Void {
         let message = frame.create(message: message)
         if let error = message.error { stateUpdateHandler(.failed(error)); cleanup() }
         guard let data = message.data else { return }
         let queued = data.chunks
         guard !queued.isEmpty else { return }
         for data in queued { processing(with: data) }
+    }
+    
+    /// receive a message from a connected host
+    /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
+    public func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void {
+        transmitter = completion
     }
 }
 
@@ -59,80 +68,91 @@ public final class FNConnection: FNConnectionProtocol {
 private extension FNConnection {
     /// start timeout and cancel connection
     /// if timeout value is reached
-    private func timeout() {
-        self.timer = Timer.timeout { [weak self] in
-            guard let self = self else { return }
-            self.cleanup()
-            self.stateUpdateHandler(.failed(FNConnectionError.connectionTimeout))
+    private func timeout() -> Void {
+        timer = Timer.timeout { [weak self] in
+            guard let self else { return }
+            cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionTimeout))
         }
     }
     
     /// cancel a running timeout
-    private func invalidate() {
-        guard let timer = self.timer else { return }
+    private func invalidate() -> Void {
+        guard let timer else { return }
         timer.cancel(); self.timer = nil
+    }
+    
+    /// check if path is available
+    private func satisfied() -> Void {
+        monitor.pathUpdateHandler = { [weak self] path in
+            guard let self else { return }
+            switch path.status {
+            case .satisfied: connection.start(queue: queue)
+            case .unsatisfied: cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionUnsatisfied))
+            default: break }
+        }
     }
     
     /// process message data and send it to a host
     /// - Parameter data: message data
-    private func processing(with data: Data) {
+    private func processing(with data: Data) -> Void {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
-                guard let self = self else { return }
-                self.stateUpdateHandler(.bytes(FNConnectionBytes(output: data.count)))
-                guard let error = error, error != NWError.posix(.ECANCELED) else { return }
-                self.stateUpdateHandler(.failed(error))
+                guard let self else { return }
+                transmitter(nil, FNConnectionBytes(output: data.count))
+                guard let error, error != NWError.posix(.ECANCELED) else { return }
+                stateUpdateHandler(.failed(error))
             })
         }
     }
     
     /// process message data and parse it into a conform message
     /// - Parameter data: message data
-    private func processing(from data: Data) {
-        frame.parse(data: data) { message, error in
-            if let message = message { stateUpdateHandler(.message(message)) }
-            guard let error = error else { return }
+    private func processing(from data: Data) -> Void {
+        frame.parse(data: data) { [weak self] message, error in
+            guard let self else { return }
+            if let message { transmitter(message, nil) }
+            guard let error else { return }
             stateUpdateHandler(.failed(error)); cleanup()
         }
-        stateUpdateHandler(.bytes(FNConnectionBytes(input: data.count)))
+        transmitter(nil, FNConnectionBytes(input: data.count))
     }
     
     /// clean and cancel connection
     /// clear instance
-    private func cleanup() {
+    private func cleanup() -> Void {
         queue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            self.invalidate()
-            self.connection.cancel()
-            self.frame.reset()
+            guard let self else { return }
+            invalidate()
+            connection.cancel()
+            frame.reset()
         }
     }
     
     /// connection state update handler
     /// handles different network connection states
-    private func handler() {
+    private func handler() -> Void {
         connection.stateUpdateHandler = { [weak self] state in
-            guard let self = self else { return }
+            guard let self else { return }
             switch state {
-            case .cancelled: self.stateUpdateHandler(.cancelled)
-            case .failed(let error), .waiting(let error): self.stateUpdateHandler(.failed(error)); self.cleanup()
-            case .ready: self.stateUpdateHandler(.ready); self.invalidate()
+            case .cancelled: stateUpdateHandler(.cancelled)
+            case .failed(let error), .waiting(let error): stateUpdateHandler(.failed(error)); cleanup()
+            case .ready: stateUpdateHandler(.ready); invalidate()
             default: break }
         }
     }
     
     /// receives tcp data and parse it into a message frame
-    private func receive() {
+    private func receive() -> Void {
         connection.batch {
             connection.receive(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
-                guard let self = self else { return }
-                if let error = error {
+                guard let self else { return }
+                if let error {
                     guard error != NWError.posix(.ECANCELED) else { return }
-                    self.stateUpdateHandler(.failed(error)); self.cleanup()
+                    stateUpdateHandler(.failed(error)); cleanup()
                     return
                 }
-                if let data = data { self.processing(from: data) }
-                if isComplete { self.cleanup() } else { self.receive() }
+                if let data { processing(from: data) }
+                if isComplete { cleanup() } else { receive() }
             }
         }
     }

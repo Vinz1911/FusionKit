@@ -13,12 +13,14 @@ public enum FNConnectionError: Error {
     case missingHost
     case missingPort
     case connectionTimeout
+    case connectionUnsatisfied
     
     public var description: String {
         switch self {
         case .missingHost: return "missing host"
         case .missingPort: return "missing port"
         case .connectionTimeout: return "connection timeout"
+        case .connectionUnsatisfied: return "connection path is not satisfied"
         }
     }
 }

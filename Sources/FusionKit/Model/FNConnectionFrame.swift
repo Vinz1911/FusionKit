@@ -30,7 +30,7 @@ internal final class FNConnectionFrame: FNConnectionFrameProtocol {
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
-    internal func parse(data: Data, _ completion: (FNConnectionMessage?, Error?) -> Void) {
+    internal func parse(data: Data, _ completion: (FNConnectionMessage?, Error?) -> Void) -> Void {
         buffer.mutate { $0.append(data) }
         guard let length = extractSize() else { return }
         guard buffer.value.count <= FNConnectionCounts.frame.rawValue else { completion(nil, FNConnectionFrameError.readBufferOverflow); return }

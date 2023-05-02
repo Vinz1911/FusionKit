@@ -23,13 +23,17 @@ public protocol FNConnectionProtocol {
     
     /// start a connection to a host
     /// creates a async tcp connection
-    func start()
+    func start() -> Void
+    
+    /// receive a message from a connected host
+    /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
+    func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void
     
     /// cancel the connection
     /// closes the tcp connection and cleanup
-    func cancel()
+    func cancel() -> Void
     
     /// send messages to a connected host
     /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
-    func send<T: FNConnectionMessage>(message: T)
+    func send<T: FNConnectionMessage>(message: T) -> Void
 }
