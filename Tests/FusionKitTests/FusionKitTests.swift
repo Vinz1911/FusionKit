@@ -20,12 +20,11 @@ class FusionKitTests: XCTestCase {
     private var buffer = "50000"
     private let timeout = 10.0
     private let uuid = UUID().uuidString
-    private var exp: XCTestExpectation?
+    private var exp = XCTestExpectation(description: "wait for test to finish...")
     
     /// set up
     override func setUp() {
         super.setUp()
-        exp = expectation(description: "wait for test to finish...")
     }
     
     /// start test sending single text message
@@ -67,7 +66,6 @@ class FusionKitTests: XCTestCase {
         XCTAssertEqual(FNConnectionFrameError.readBufferOverflow.description, "read buffer overflow")
         XCTAssertEqual(FNConnectionFrameError.writeBufferOverflow.description, "write buffer overflow")
         
-        guard let exp else { return }
         exp.fulfill()
         wait(for: [exp], timeout: timeout)
     }
@@ -85,7 +83,7 @@ private extension FusionKitTests {
             if let message { handleMessages(message: message) }
         }
         connection.start()
-        wait(for: [exp!], timeout: timeout)
+        wait(for: [exp], timeout: timeout)
     }
     
     /// message framer
@@ -96,17 +94,16 @@ private extension FusionKitTests {
         guard let data = message.data else { XCTFail("failed to get message data"); return }
         
         framer.parse(data: data) { message, error in
-            if case let message as String = message { XCTAssertEqual(message, uuid); exp?.fulfill() }
-            if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp?.fulfill() }
+            if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
+            if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
             if let error { XCTFail("failed with error: \(error)") }
         }
-        wait(for: [exp!], timeout: timeout)
+        wait(for: [exp], timeout: timeout)
     }
     
     /// handles test routes for messages
     /// - Parameter message: generic `FNConnectionMessage`
     private func handleMessages(message: FNConnectionMessage) {
-        guard let exp else { return }
         if case let message as UInt16 = message {
             XCTAssertEqual(message, UInt16(buffer))
             connection.cancel()
