@@ -27,7 +27,7 @@ public protocol FNConnectionProtocol {
     
     /// receive a message from a connected host
     /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
-    func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void)
+    func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void
     
     /// cancel the connection
     /// closes the tcp connection and cleanup
