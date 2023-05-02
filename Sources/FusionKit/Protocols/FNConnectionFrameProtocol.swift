@@ -18,5 +18,5 @@ internal protocol FNConnectionFrameProtocol {
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
-    func parse(data: Data, _ completion: (FNConnectionMessage?, Error?) -> Void)
+    func parse(data: Data, _ completion: (FNConnectionMessage?, Error?) -> Void) -> Void
 }
