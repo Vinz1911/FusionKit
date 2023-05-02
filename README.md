@@ -13,6 +13,15 @@ The `Fusion Framing Protocol (FFP)` is proprietary networking protocol which use
 ### Swift Packages
 [Swift Package Manager](https://developer.apple.com/documentation/xcode/swift-packages). Just add this repo to your project.
 
+```swift
+// ...
+dependencies: [
+    // Dependencies declare other packages that this package depends on.
+    .package(url: "https://github.com/Vinz1911/FusionKit.git", .exact("7.0.0")),
+],
+// ...
+```
+
 ## Import:
 ```swift
 // import the Framework
