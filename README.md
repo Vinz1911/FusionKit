@@ -17,7 +17,7 @@ The `Fusion Framing Protocol (FFP)` is proprietary networking protocol which use
 // ...
 dependencies: [
     // Dependencies declare other packages that this package depends on.
-    .package(url: "https://github.com/Vinz1911/FusionKit.git", .exact("7.0.0")),
+    .package(url: "https://github.com/Vinz1911/FusionKit.git", .exact("7.1.0")),
 ],
 // ...
 ```
