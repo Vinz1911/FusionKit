@@ -9,22 +9,6 @@
 import Foundation
 import Network
 
-// MARK: - Atomic -
-
-internal class Atomic<Value> {
-    private let queue = DispatchQueue(label: UUID().uuidString)
-    private var storage: Value
-    internal var value: Value { get { queue.sync { storage } } }
-    
-    /// initialize a atomic value from generic <T>
-    /// - Parameter value: init value
-    internal init(_ value: Value) { storage = value }
-    
-    /// change value thread safe
-    /// - Parameter transform: the value
-    internal func mutate(_ transform: (inout Value) -> Void) { queue.sync { transform(&storage) } }
-}
-
 // MARK: - Timer -
 
 internal extension Timer {
