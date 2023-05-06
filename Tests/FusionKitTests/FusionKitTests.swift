@@ -22,39 +22,39 @@ class FusionKitTests: XCTestCase {
     private let uuid = UUID().uuidString
     private var exp = XCTestExpectation(description: "wait for test to finish...")
     
-    /// set up
+    /// Set up
     override func setUp() {
         super.setUp()
     }
     
-    /// start test sending single text message
+    /// Start test sending single text message
     func testTextMessage() {
         start(test: .string)
     }
     
-    /// start test sending single binary message
+    /// Start test sending single binary message
     func testBinaryMessage() {
         start(test: .data)
     }
     
-    /// start test sending single ping message
+    /// Start test sending single ping message
     func testPingMessage() {
         start(test: .ping)
     }
     
-    /// start test creating and parsing string based message
+    /// Start test creating and parsing string based message
     func testParsingStringMessage() {
         let message = uuid
         framer(message: message)
     }
     
-    /// start test creating and parsing data based message
+    /// Start test creating and parsing data based message
     func testParsingDataMessage() {
         guard let message = uuid.data(using: .utf8) else { return }
         framer(message: message)
     }
     
-    /// start test error description mapping
+    /// Start test error description mapping
     func testErrorDescription() {
         XCTAssertEqual(FNConnectionError.missingHost.description, "missing host")
         XCTAssertEqual(FNConnectionError.missingPort.description, "missing port")
@@ -74,7 +74,7 @@ class FusionKitTests: XCTestCase {
 // MARK: - Private API Extension -
 
 private extension FusionKitTests {
-    /// create a connection and start
+    /// Create a connection and start
     /// - Parameter test: test case
     private func start(test: TestCase) {
         stateUpdateHandler(connection: connection, test: test)
@@ -86,7 +86,7 @@ private extension FusionKitTests {
         wait(for: [exp], timeout: timeout)
     }
     
-    /// message framer
+    /// Message framer
     private func framer<T: FNConnectionMessage>(message: T) {
         let framer = FNConnectionFrame()
         let message = framer.create(message: message)
@@ -101,7 +101,7 @@ private extension FusionKitTests {
         wait(for: [exp], timeout: timeout)
     }
     
-    /// handles test routes for messages
+    /// Handles test routes for messages
     /// - Parameter message: generic `FNConnectionMessage`
     private func handleMessages(message: FNConnectionMessage) {
         if case let message as UInt16 = message {
@@ -121,7 +121,7 @@ private extension FusionKitTests {
         }
     }
     
-    /// state update handler for connection
+    /// State update handler for connection
     /// - Parameter connection: instance of 'NetworkConnection'
     private func stateUpdateHandler(connection: FNConnection, test: TestCase) {
         connection.stateUpdateHandler = { [weak self] state in
@@ -129,8 +129,8 @@ private extension FusionKitTests {
             switch state {
             case .ready:
                 if test == .string { connection.send(message: buffer) }
-                if test == .data { connection.send(message: Data(count: Int(buffer) ?? 50000)) }
-                if test == .ping { connection.send(message: UInt16(buffer) ?? 50000) }
+                if test == .data { connection.send(message: Data(count: Int(buffer)!)) }
+                if test == .ping { connection.send(message: UInt16(buffer)!) }
             case .cancelled: break
             case .failed(let error):
                 guard let error else { return }

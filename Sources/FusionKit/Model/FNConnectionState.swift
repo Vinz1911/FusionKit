@@ -8,13 +8,14 @@
 
 import Foundation
 
-/// result type for input and output bytes
-public struct FNConnectionBytes {
+/// `FNConnectionBytes` for input and output bytes
+public struct FNConnectionBytes: FNConnectionBytesProtocol {
     public var input: Int?
     public var output: Int?
 }
 
-/// network connection state handler
+/// `FNConnectionState` state handler
+@frozen
 public enum FNConnectionState {
     case ready
     case cancelled

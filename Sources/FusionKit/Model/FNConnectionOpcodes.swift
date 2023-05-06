@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// opcodes for framing
+/// Opcodes for framing
 internal enum FNConnectionOpcodes: UInt8 {
     case none = 0x0
     case text = 0x1
@@ -16,7 +16,7 @@ internal enum FNConnectionOpcodes: UInt8 {
     case ping = 0x3
 }
 
-// protocol byte counts
+// Protocol byte counts
 internal enum FNConnectionCounts: Int {
     case opcode = 0x1
     case control = 0x5

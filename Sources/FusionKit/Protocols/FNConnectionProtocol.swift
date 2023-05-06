@@ -10,30 +10,31 @@ import Foundation
 import Network
 
 public protocol FNConnectionProtocol {
-    /// result type
+    /// Access to connection State's
     var stateUpdateHandler: (FNConnectionState) -> Void { get set }
     
-    /// create a new connection with 'FusionKit'
+    /// The `FNConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
+    /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
+    /// allows to transmit data as fast as possible and allows to measure a Networks's performance.
+    ///
     /// - Parameters:
-    ///   - host: the host to connect
-    ///   - port: the port of the host
+    ///   - host: the host name
+    ///   - port: the host port
     ///   - parameters: network parameters
     ///   - queue: dispatch queue
     init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
     
-    /// start a connection to a host
-    /// creates a async tcp connection
+    /// Start a connecting to a host
     func start() -> Void
     
-    /// receive a message from a connected host
-    /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
-    func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void
-    
-    /// cancel the connection
-    /// closes the tcp connection and cleanup
+    /// Cancel the current connection
     func cancel() -> Void
     
-    /// send messages to a connected host
-    /// - Parameter message: generic type send 'Text', 'Data' and 'Ping'
+    /// Send messages to a connected host
+    /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
     func send<T: FNConnectionMessage>(message: T) -> Void
+    
+    /// Receive a message from a connected host
+    /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
+    func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void
 }

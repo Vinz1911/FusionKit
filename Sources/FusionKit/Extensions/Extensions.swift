@@ -12,7 +12,8 @@ import Network
 // MARK: - Timer -
 
 internal extension Timer {
-    /// create a timeout
+    /// Create a timeout
+    ///
     /// - Parameters:
     ///   - after: executed after given time
     ///   - completion: completion
@@ -26,31 +27,30 @@ internal extension Timer {
     }
 }
 
-// MARK: - Data Type Extensions -
+// MARK: - Type Extensions -
 
 internal extension UInt32 {
-    /// convert integer to data with bigEndian
+    /// Convert integer to data with bigEndian
     var bigEndianBytes: Data { withUnsafeBytes(of: self.bigEndian) { Data($0) } }
 }
 
 internal extension Int {
-    /// minimum size of received bytes
+    /// Minimum size of received bytes
     static var minimum: Int { 0x1 }
     
-    /// maximum size of received bytes
+    /// Maximum size of received bytes
     static var maximum: Int { 0x2000 }
 }
 
-// internal extensions
 internal extension Data {
-    /// slice data into chunks
+    /// Slice data into chunks
     var chunks: [Data] {
         var size = self.count / 0xFF
         size = Swift.max(size, 0x2000)
         return stride(from: .zero, to: self.count, by: size).map { Data(self[$0..<Swift.min($0 + size, self.count)]) }
     }
     
-    /// func to extract integers from data as big endian
+    /// Extract integers from data as big endian
     var bigEndian: UInt32 {
         guard !self.isEmpty else { return .zero }
         return UInt32(bigEndian: withUnsafeBytes { bytes in
