@@ -9,7 +9,7 @@
 import Foundation
 
 /// `FNConnectionBytes` for input and output bytes
-public struct FNConnectionBytes {
+public struct FNConnectionBytes: FNConnectionBytesProtocol {
     public var input: Int?
     public var output: Int?
 }
