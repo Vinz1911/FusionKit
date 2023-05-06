@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// network connection specific errors
+/// `FNConnection` specific errors
 public enum FNConnectionError: Error {
     case missingHost
     case missingPort
@@ -25,7 +25,7 @@ public enum FNConnectionError: Error {
     }
 }
 
-/// network frame specific errors
+/// `FNConnectionFrame` specific errors
 public enum FNConnectionFrameError: Error {
     case hashMismatch
     case parsingFailed

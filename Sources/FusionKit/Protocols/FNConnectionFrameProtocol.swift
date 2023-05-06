@@ -9,12 +9,14 @@
 import Foundation
 
 internal protocol FNConnectionFrameProtocol {
-    /// create a protocol conform message frame
+    /// Create a protocol conform message frame
+    ///
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: message frame as data and optional error
     func create<T: FNConnectionMessage>(message: T) -> (data: Data?, error: Error?)
     
-    /// parse a protocol conform message frame
+    /// Parse a protocol conform message frame
+    ///
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message

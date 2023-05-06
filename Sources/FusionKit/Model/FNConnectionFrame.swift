@@ -13,7 +13,8 @@ internal final class FNConnectionFrame: FNConnectionFrameProtocol {
     private var buffer = Data()
     internal func reset() { buffer.removeAll() }
     
-    /// create a protocol conform message frame
+    /// Create a protocol conform message frame
+    ///
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: message frame as data and optional error
     internal func create<T: FNConnectionMessage>(message: T) -> (data: Data?, error: Error?) {
@@ -26,7 +27,8 @@ internal final class FNConnectionFrame: FNConnectionFrameProtocol {
         return (frame, nil)
     }
     
-    /// parse a protocol conform message frame
+    /// Parse a protocol conform message frame
+    ///
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns parsed message
@@ -51,24 +53,27 @@ internal final class FNConnectionFrame: FNConnectionFrameProtocol {
 // MARK: - Private API Extension -
 
 private extension FNConnectionFrame {
-    // extract the message hash from the data
-    // if not possible it returns nil
+    /// Extract the message hash from the data,
+    /// if not possible it returns nil
+    /// - Returns: a `SHA256Digest`
     private func extractHash() -> SHA256Digest? {
         guard buffer.count >= FNConnectionCounts.overhead.rawValue else { return nil }
         let hash = buffer.subdata(in: FNConnectionCounts.control.rawValue..<FNConnectionCounts.overhead.rawValue).withUnsafeBytes { $0.load(as: SHA256.Digest.self) }
         return hash
     }
     
-    // extract the message frame size from the data
-    // if not possible it returns nil
+    /// Extract the message frame size from the data,
+    /// if not possible it returns nil
+    /// - Returns: the size as `UInt32`
     private func extractSize() -> UInt32? {
         guard buffer.count >= FNConnectionCounts.overhead.rawValue else { return nil }
         let size = buffer.subdata(in: FNConnectionCounts.opcode.rawValue..<FNConnectionCounts.control.rawValue)
         return size.bigEndian
     }
     
-    // extract the message and remove the overhead
-    // if not possible it returns nil
+    /// Extract the message and remove the overhead,
+    /// if not possible it returns nil
+    /// - Returns: the extracted message as `Data`
     private func extractMessage() -> Data? {
         guard buffer.count >= FNConnectionCounts.overhead.rawValue else { return nil }
         guard let length = extractSize() else { return nil }
