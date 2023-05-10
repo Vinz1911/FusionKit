@@ -90,7 +90,7 @@ private extension FNConnection {
             guard let self else { return }
             switch path.status {
             case .satisfied: connection.start(queue: queue)
-            case .unsatisfied: cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionUnsatisfied))
+            case .unsatisfied: stateUpdateHandler(.failed(FNConnectionError.connectionUnsatisfied)); cleanup()
             default: break }
         }
     }
@@ -125,6 +125,7 @@ private extension FNConnection {
         queue.async(flags: .barrier) { [weak self] in
             guard let self else { return }
             invalidate()
+            monitor.cancel()
             connection.cancel()
             frame.reset()
         }
