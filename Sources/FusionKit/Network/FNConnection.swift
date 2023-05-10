@@ -90,7 +90,7 @@ private extension FNConnection {
             guard let self else { return }
             switch path.status {
             case .satisfied: connection.start(queue: queue)
-            case .unsatisfied: stateUpdateHandler(.failed(FNConnectionError.connectionUnsatisfied)); cleanup()
+            case .unsatisfied: cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionUnsatisfied))
             default: break }
         }
     }
