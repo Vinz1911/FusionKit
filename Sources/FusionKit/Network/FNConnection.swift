@@ -125,6 +125,7 @@ private extension FNConnection {
         queue.async(flags: .barrier) { [weak self] in
             guard let self else { return }
             invalidate()
+            monitor.cancel()
             connection.cancel()
             frame.reset()
         }
