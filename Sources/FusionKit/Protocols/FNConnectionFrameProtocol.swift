@@ -12,13 +12,13 @@ internal protocol FNConnectionFrameProtocol {
     /// Create a protocol conform message frame
     ///
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
-    /// - Returns: message frame as data and optional error
-    func create<T: FNConnectionMessage>(message: T) -> (data: Data?, error: Error?)
+    /// - Returns: generic Result type returning data and possible error
+    func create<T: FNConnectionMessage>(message: T) -> Result<Data, Error>
     
     /// Parse a protocol conform message frame
     ///
     /// - Parameters:
     ///   - data: the data which should be parsed
-    ///   - completion: completion block returns parsed message
-    func parse(data: Data, _ completion: (FNConnectionMessage?, Error?) -> Void) -> Void
+    ///   - completion: completion block returns generic Result type with parsed message and possible error
+    func parse(data: Data, _ completion: (Result<FNConnectionMessage, Error>) -> Void) -> Void
 }

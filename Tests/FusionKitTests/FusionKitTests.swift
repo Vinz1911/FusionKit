@@ -90,14 +90,16 @@ private extension FusionKitTests {
     private func framer<T: FNConnectionMessage>(message: T) {
         let framer = FNConnectionFrame()
         let message = framer.create(message: message)
-        if let error = message.error { XCTFail("failed with error: \(error)") }
-        guard let data = message.data else { XCTFail("failed to get message data"); return }
-        
-        framer.parse(data: data) { message, error in
-            if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
-            if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
-            if let error { XCTFail("failed with error: \(error)") }
-        }
+        switch message {
+        case .success(let data):
+            framer.parse(data: data) { result in
+                switch result {
+                case .success(let message):
+                    if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
+                    if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
+                case .failure(let error): XCTFail("failed with error: \(error)") }
+            }
+        case .failure(let error): XCTFail("failed with error: \(error)") }
         wait(for: [exp], timeout: timeout)
     }
     
