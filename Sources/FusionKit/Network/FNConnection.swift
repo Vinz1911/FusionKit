@@ -12,7 +12,7 @@ import Network
 public final class FNConnection: FNConnectionProtocol {
     public var stateUpdateHandler: (FNConnectionState) -> Void = { _ in }
     
-    private var transmitter: (FNConnectionMessage?, FNConnectionBytes?) -> Void = { _, _ in }
+    private var transmitter: (FNConnectionTransmitter) -> Void = { _ in }
     private var frame = FNConnectionFrame()
     private let queue: DispatchQueue
     private var connection: NWConnection
@@ -52,17 +52,20 @@ public final class FNConnection: FNConnectionProtocol {
         queue.async { [weak self] in
             guard let self else { return }
             let message = frame.create(message: message)
-            if let error = message.error { stateUpdateHandler(.failed(error)); cleanup() }
-            guard let data = message.data else { return }
-            let queued = data.chunks
-            if !queued.isEmpty { for data in queued { processing(with: data) } }
+            switch message {
+            case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { processing(with: data) } }
+            case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
         }
     }
     
     /// Receive a message from a connected host
     /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
     public func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void {
-        transmitter = completion
+        transmitter = { result in
+            switch result {
+            case .message(let message): completion(message, nil)
+            case .bytes(let bytes): completion(nil, bytes) }
+        }
     }
 }
 
@@ -101,7 +104,7 @@ private extension FNConnection {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
                 guard let self else { return }
-                transmitter(nil, FNConnectionBytes(output: data.count))
+                transmitter(.bytes(FNConnectionBytes(output: data.count)))
                 guard let error, error != NWError.posix(.ECANCELED) else { return }
                 stateUpdateHandler(.failed(error))
             })
@@ -111,13 +114,13 @@ private extension FNConnection {
     /// Process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processing(from data: Data) -> Void {
-        frame.parse(data: data) { [weak self] message, error in
+        frame.parse(data: data) { [weak self] result in
             guard let self else { return }
-            if let message { transmitter(message, nil) }
-            guard let error else { return }
-            stateUpdateHandler(.failed(error)); cleanup()
+            switch result {
+            case .success(let message): transmitter(.message(message))
+            case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
         }
-        transmitter(nil, FNConnectionBytes(input: data.count))
+        transmitter(.bytes(.init(input: data.count)))
     }
     
     /// Clean and cancel connection

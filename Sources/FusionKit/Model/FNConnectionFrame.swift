@@ -16,35 +16,35 @@ internal final class FNConnectionFrame: FNConnectionFrameProtocol {
     /// Create a protocol conform message frame
     ///
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
-    /// - Returns: message frame as data and optional error
-    internal func create<T: FNConnectionMessage>(message: T) -> (data: Data?, error: Error?) {
-        guard message.raw.count <= FNConnectionCounts.frame.rawValue - FNConnectionCounts.overhead.rawValue else { return (nil, FNConnectionFrameError.writeBufferOverflow) }
+    /// - Returns: generic Result type returning data and possible error
+    internal func create<T: FNConnectionMessage>(message: T) -> Result<Data, Error> {
+        guard message.raw.count <= FNConnectionCounts.frame.rawValue - FNConnectionCounts.overhead.rawValue else { return .failure(FNConnectionFrameError.writeBufferOverflow) }
         var frame = Data()
         frame.append(message.opcode)
         frame.append(UInt32(message.raw.count + FNConnectionCounts.overhead.rawValue).bigEndianBytes)
         frame.append(Data(SHA256.hash(data: frame.prefix(FNConnectionCounts.control.rawValue))))
         frame.append(message.raw)
-        return (frame, nil)
+        return .success(frame)
     }
     
     /// Parse a protocol conform message frame
     ///
     /// - Parameters:
     ///   - data: the data which should be parsed
-    ///   - completion: completion block returns parsed message
-    internal func parse(data: Data, _ completion: (FNConnectionMessage?, Error?) -> Void) -> Void {
+    ///   - completion: completion block returns generic Result type with parsed message and possible error
+    internal func parse(data: Data, _ completion: (Result<FNConnectionMessage, Error>) -> Void) -> Void {
         buffer.append(data)
         guard let length = extractSize() else { return }
-        guard buffer.count <= FNConnectionCounts.frame.rawValue else { completion(nil, FNConnectionFrameError.readBufferOverflow); return }
+        guard buffer.count <= FNConnectionCounts.frame.rawValue else { completion(.failure(FNConnectionFrameError.readBufferOverflow)); return }
         guard buffer.count >= FNConnectionCounts.overhead.rawValue, buffer.count >= length else { return }
         while buffer.count >= length && length != .zero {
-            guard SHA256.hash(data: buffer.prefix(FNConnectionCounts.control.rawValue)) == extractHash() else { completion(nil, FNConnectionFrameError.hashMismatch); return }
-            guard let bytes = extractMessage() else { completion(nil, FNConnectionFrameError.parsingFailed); return }
+            guard SHA256.hash(data: buffer.prefix(FNConnectionCounts.control.rawValue)) == extractHash() else { completion(.failure(FNConnectionFrameError.hashMismatch)); return }
+            guard let bytes = extractMessage() else { completion(.failure(FNConnectionFrameError.parsingFailed)); return }
             switch buffer.first {
-            case FNConnectionOpcodes.binary.rawValue: completion(bytes, nil)
-            case FNConnectionOpcodes.ping.rawValue: completion(UInt16(bytes.count), nil)
-            case FNConnectionOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(result, nil)
-            default: completion(nil, FNConnectionFrameError.parsingFailed) }
+            case FNConnectionOpcodes.binary.rawValue: completion(.success(bytes))
+            case FNConnectionOpcodes.ping.rawValue: completion(.success(UInt16(bytes.count)))
+            case FNConnectionOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(.success(result))
+            default: completion(.failure(FNConnectionFrameError.parsingFailed)) }
             if buffer.count <= length { buffer.removeAll() } else { buffer = Data(buffer[length...]) }
         }
     }

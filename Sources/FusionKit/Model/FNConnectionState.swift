@@ -14,6 +14,15 @@ public struct FNConnectionBytes: FNConnectionBytesProtocol {
     public var output: Int?
 }
 
+// MARK: - State Types -
+
+/// `FNConnectionTransmitter` internal message transmitter
+@frozen
+internal enum FNConnectionTransmitter {
+    case message(FNConnectionMessage)
+    case bytes(FNConnectionBytes)
+}
+
 /// `FNConnectionState` state handler
 @frozen
 public enum FNConnectionState {
