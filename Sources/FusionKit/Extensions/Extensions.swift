@@ -45,8 +45,7 @@ internal extension Int {
 internal extension Data {
     /// Slice data into chunks
     var chunks: [Data] {
-        var size = self.count / 0xFF
-        size = Swift.max(size, 0x2000)
+        let size = 0x5A0
         return stride(from: .zero, to: self.count, by: size).map { Data(self[$0..<Swift.min($0 + size, self.count)]) }
     }
     
