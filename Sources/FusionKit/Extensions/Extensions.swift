@@ -40,12 +40,16 @@ internal extension Int {
     
     /// Maximum size of received bytes
     static var maximum: Int { 0x2000 }
+    
+    /// Maximum Segment Size
+    static var mtu: Int { 0x5A0 }
 }
 
 internal extension Data {
     /// Slice data into chunks
     var chunks: [Data] {
-        let size = 0x5A0
+        var size = self.count / 128
+        size = Swift.max(Int.mtu, Swift.min(size, Int.maximum))
         return stride(from: .zero, to: self.count, by: size).map { Data(self[$0..<Swift.min($0 + size, self.count)]) }
     }
     
