@@ -60,11 +60,10 @@ class FusionKitTests: XCTestCase {
         XCTAssertEqual(FKConnectionError.missingPort.description, "missing port")
         XCTAssertEqual(FKConnectionError.connectionTimeout.description, "connection timeout")
         XCTAssertEqual(FKConnectionError.connectionUnsatisfied.description, "connection path is not satisfied")
-        
-        XCTAssertEqual(FKConnectionFramerError.hashMismatch.description, "message hash does not match")
-        XCTAssertEqual(FKConnectionFramerError.parsingFailed.description, "message parsing failed")
-        XCTAssertEqual(FKConnectionFramerError.readBufferOverflow.description, "read buffer overflow")
-        XCTAssertEqual(FKConnectionFramerError.writeBufferOverflow.description, "write buffer overflow")
+        XCTAssertEqual(FKConnectionError.hashMismatch.description, "message hash does not match")
+        XCTAssertEqual(FKConnectionError.parsingFailed.description, "message parsing failed")
+        XCTAssertEqual(FKConnectionError.readBufferOverflow.description, "read buffer overflow")
+        XCTAssertEqual(FKConnectionError.writeBufferOverflow.description, "write buffer overflow")
         
         exp.fulfill()
         wait(for: [exp], timeout: timeout)

@@ -18,7 +18,7 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: generic Result type returning data and possible error
     internal func create<T: FKConnectionMessage>(message: T) -> Result<Data, Error> {
-        guard message.raw.count <= FKConnectionNumbers.frame.rawValue - FKConnectionNumbers.overhead.rawValue else { return .failure(FKConnectionFramerError.writeBufferOverflow) }
+        guard message.raw.count <= FKConnectionNumbers.frame.rawValue - FKConnectionNumbers.overhead.rawValue else { return .failure(FKConnectionError.writeBufferOverflow) }
         var frame = Data()
         frame.append(message.opcode)
         frame.append(UInt32(message.raw.count + FKConnectionNumbers.overhead.rawValue).bigEndianBytes)
@@ -35,16 +35,16 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     internal func parse(data: Data, _ completion: (Result<FKConnectionMessage, Error>) -> Void) -> Void {
         buffer.append(data)
         guard let length = extractSize() else { return }
-        guard buffer.count <= FKConnectionNumbers.frame.rawValue else { completion(.failure(FKConnectionFramerError.readBufferOverflow)); return }
+        guard buffer.count <= FKConnectionNumbers.frame.rawValue else { completion(.failure(FKConnectionError.readBufferOverflow)); return }
         guard buffer.count >= FKConnectionNumbers.overhead.rawValue, buffer.count >= length else { return }
         while buffer.count >= length && length != .zero {
-            guard SHA256.hash(data: buffer.prefix(FKConnectionNumbers.control.rawValue)) == extractHash() else { completion(.failure(FKConnectionFramerError.hashMismatch)); return }
-            guard let bytes = extractMessage() else { completion(.failure(FKConnectionFramerError.parsingFailed)); return }
+            guard SHA256.hash(data: buffer.prefix(FKConnectionNumbers.control.rawValue)) == extractHash() else { completion(.failure(FKConnectionError.hashMismatch)); return }
+            guard let bytes = extractMessage() else { completion(.failure(FKConnectionError.parsingFailed)); return }
             switch buffer.first {
             case FKConnectionOpcodes.binary.rawValue: completion(.success(bytes))
             case FKConnectionOpcodes.ping.rawValue: completion(.success(UInt16(bytes.count)))
             case FKConnectionOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(.success(result))
-            default: completion(.failure(FKConnectionFramerError.parsingFailed)) }
+            default: completion(.failure(FKConnectionError.parsingFailed)) }
             if buffer.count <= length { buffer.removeAll() } else { buffer = Data(buffer[length...]) }
         }
     }
