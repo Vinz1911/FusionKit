@@ -1,5 +1,5 @@
 //
-//  FNConnectionError.swift
+//  FKConnectionError.swift
 //  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
@@ -8,8 +8,8 @@
 
 import Foundation
 
-/// `FNConnection` specific errors
-public enum FNConnectionError: Error {
+/// The `FKConnection` specific errors
+public enum FKConnectionError: Error {
     case missingHost
     case missingPort
     case connectionTimeout
@@ -25,8 +25,8 @@ public enum FNConnectionError: Error {
     }
 }
 
-/// `FNConnectionFrame` specific errors
-public enum FNConnectionFrameError: Error {
+/// The `FKConnectionFramer` specific errors
+public enum FKConnectionFramerError: Error {
     case hashMismatch
     case parsingFailed
     case readBufferOverflow

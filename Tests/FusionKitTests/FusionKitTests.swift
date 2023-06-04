@@ -16,7 +16,7 @@ private enum TestCase {
 }
 
 class FusionKitTests: XCTestCase {
-    private var connection = FNConnection(host: "atonet.de", port: 7878)
+    private var connection = FKConnection(host: "fusion.atonet.de", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private let uuid = UUID().uuidString
@@ -56,15 +56,15 @@ class FusionKitTests: XCTestCase {
     
     /// Start test error description mapping
     func testErrorDescription() {
-        XCTAssertEqual(FNConnectionError.missingHost.description, "missing host")
-        XCTAssertEqual(FNConnectionError.missingPort.description, "missing port")
-        XCTAssertEqual(FNConnectionError.connectionTimeout.description, "connection timeout")
-        XCTAssertEqual(FNConnectionError.connectionUnsatisfied.description, "connection path is not satisfied")
+        XCTAssertEqual(FKConnectionError.missingHost.description, "missing host")
+        XCTAssertEqual(FKConnectionError.missingPort.description, "missing port")
+        XCTAssertEqual(FKConnectionError.connectionTimeout.description, "connection timeout")
+        XCTAssertEqual(FKConnectionError.connectionUnsatisfied.description, "connection path is not satisfied")
         
-        XCTAssertEqual(FNConnectionFrameError.hashMismatch.description, "message hash does not match")
-        XCTAssertEqual(FNConnectionFrameError.parsingFailed.description, "message parsing failed")
-        XCTAssertEqual(FNConnectionFrameError.readBufferOverflow.description, "read buffer overflow")
-        XCTAssertEqual(FNConnectionFrameError.writeBufferOverflow.description, "write buffer overflow")
+        XCTAssertEqual(FKConnectionFramerError.hashMismatch.description, "message hash does not match")
+        XCTAssertEqual(FKConnectionFramerError.parsingFailed.description, "message parsing failed")
+        XCTAssertEqual(FKConnectionFramerError.readBufferOverflow.description, "read buffer overflow")
+        XCTAssertEqual(FKConnectionFramerError.writeBufferOverflow.description, "write buffer overflow")
         
         exp.fulfill()
         wait(for: [exp], timeout: timeout)
@@ -87,8 +87,8 @@ private extension FusionKitTests {
     }
     
     /// Message framer
-    private func framer<T: FNConnectionMessage>(message: T) {
-        let framer = FNConnectionFrame()
+    private func framer<T: FKConnectionMessage>(message: T) {
+        let framer = FKConnectionFramer()
         let message = framer.create(message: message)
         switch message {
         case .success(let data):
@@ -104,8 +104,8 @@ private extension FusionKitTests {
     }
     
     /// Handles test routes for messages
-    /// - Parameter message: generic `FNConnectionMessage`
-    private func handleMessages(message: FNConnectionMessage) {
+    /// - Parameter message: generic `FKConnectionMessage`
+    private func handleMessages(message: FKConnectionMessage) {
         if case let message as UInt16 = message {
             XCTAssertEqual(message, UInt16(buffer))
             connection.cancel()
@@ -125,7 +125,7 @@ private extension FusionKitTests {
     
     /// State update handler for connection
     /// - Parameter connection: instance of 'NetworkConnection'
-    private func stateUpdateHandler(connection: FNConnection, test: TestCase) {
+    private func stateUpdateHandler(connection: FKConnection, test: TestCase) {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
             switch state {

@@ -1,5 +1,5 @@
 //
-//  FNConnection.swift
+//  FKConnection.swift
 //  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
@@ -9,17 +9,17 @@
 import Foundation
 import Network
 
-public final class FNConnection: FNConnectionProtocol {
-    public var stateUpdateHandler: (FNConnectionState) -> Void = { _ in }
+public final class FKConnection: FKConnectionProtocol {
+    public var stateUpdateHandler: (FKConnectionState) -> Void = { _ in }
     
-    private var transmitter: (FNConnectionTransmitter) -> Void = { _ in }
-    private var frame = FNConnectionFrame()
-    private let queue: DispatchQueue
-    private var connection: NWConnection
-    private var monitor = NWPathMonitor()
+    private var transmitter: (FKTransmitter) -> Void = { _ in }
     private var timer: DispatchSourceTimer?
+    private let framer = FKConnectionFramer()
+    private let queue: DispatchQueue
+    private let connection: NWConnection
+    private let monitor = NWPathMonitor()
     
-    /// The `FNConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
+    /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
     /// allows to transmit data as fast as possible and allows to measure a Networks's performance.
     ///
@@ -29,8 +29,8 @@ public final class FNConnection: FNConnectionProtocol {
     ///   - parameters: network parameters
     ///   - queue: dispatch queue
     public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString)) {
-        if host.isEmpty { fatalError(FNConnectionError.missingHost.description) }
-        if port == .zero { fatalError(FNConnectionError.missingPort.description) }
+        if host.isEmpty { fatalError(FKConnectionError.missingHost.description) }
+        if port == .zero { fatalError(FKConnectionError.missingPort.description) }
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
         self.queue = queue
     }
@@ -48,10 +48,10 @@ public final class FNConnection: FNConnectionProtocol {
     
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
-    public func send<T: FNConnectionMessage>(message: T) -> Void {
+    public func send<T: FKConnectionMessage>(message: T) -> Void {
         queue.async { [weak self] in
             guard let self else { return }
-            let message = frame.create(message: message)
+            let message = framer.create(message: message)
             switch message {
             case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { processing(with: data) } }
             case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
@@ -59,8 +59,8 @@ public final class FNConnection: FNConnectionProtocol {
     }
     
     /// Receive a message from a connected host
-    /// - Parameter completion: contains `FNConnectionMessage` and `FNConnectionBytes` generic message typ
-    public func receive(_ completion: @escaping (FNConnectionMessage?, FNConnectionBytes?) -> Void) -> Void {
+    /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
+    public func receive(_ completion: @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void {
         transmitter = { result in
             switch result {
             case .message(let message): completion(message, nil)
@@ -71,13 +71,13 @@ public final class FNConnection: FNConnectionProtocol {
 
 // MARK: - Private API -
 
-private extension FNConnection {
+private extension FKConnection {
     /// Start timeout and cancel connection,
     /// if timeout value is reached
     private func timeout() -> Void {
         timer = Timer.timeout { [weak self] in
             guard let self else { return }
-            cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionTimeout))
+            cleanup(); stateUpdateHandler(.failed(FKConnectionError.connectionTimeout))
         }
     }
     
@@ -93,7 +93,7 @@ private extension FNConnection {
             guard let self else { return }
             switch path.status {
             case .satisfied: connection.start(queue: queue)
-            case .unsatisfied: cleanup(); stateUpdateHandler(.failed(FNConnectionError.connectionUnsatisfied))
+            case .unsatisfied: cleanup(); stateUpdateHandler(.failed(FKConnectionError.connectionUnsatisfied))
             default: break }
         }
     }
@@ -104,7 +104,7 @@ private extension FNConnection {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
                 guard let self else { return }
-                transmitter(.bytes(FNConnectionBytes(output: data.count)))
+                transmitter(.bytes(FKConnectionBytes(output: data.count)))
                 guard let error, error != NWError.posix(.ECANCELED) else { return }
                 stateUpdateHandler(.failed(error))
             })
@@ -114,7 +114,7 @@ private extension FNConnection {
     /// Process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processing(from data: Data) -> Void {
-        frame.parse(data: data) { [weak self] result in
+        framer.parse(data: data) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let message): transmitter(.message(message))
@@ -130,7 +130,7 @@ private extension FNConnection {
             invalidate()
             monitor.cancel()
             connection.cancel()
-            frame.reset()
+            framer.reset()
         }
     }
     
