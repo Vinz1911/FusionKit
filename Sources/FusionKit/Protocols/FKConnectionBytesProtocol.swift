@@ -1,5 +1,5 @@
 //
-//  FNConnectionBytesProtocol.swift
+//  FKConnectionBytesProtocol.swift
 //  FusionKit
 //
 //  Created by Vinzenz Weist on 06.05.23.
@@ -8,7 +8,7 @@
 
 import Foundation
 
-public protocol FNConnectionBytesProtocol {
+internal protocol FKConnectionBytesProtocol {
     /// Input Bytes if available
     var input: Int? { get set }
     /// Output Bytes if available
