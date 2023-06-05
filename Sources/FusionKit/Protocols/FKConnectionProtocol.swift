@@ -24,7 +24,7 @@ internal protocol FKConnectionProtocol {
     ///   - queue: dispatch queue
     init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
     
-    /// Start a connecting to a host
+    /// Start a connection
     func start() -> Void
     
     /// Cancel the current connection

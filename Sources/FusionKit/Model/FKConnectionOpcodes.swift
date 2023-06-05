@@ -16,7 +16,7 @@ internal enum FKConnectionOpcodes: UInt8 {
     case ping = 0x3
 }
 
-// Protocol byte numbers
+/// Protocol byte numbers
 internal enum FKConnectionNumbers: Int {
     case opcode = 0x1
     case control = 0x5

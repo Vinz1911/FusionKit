@@ -14,8 +14,8 @@ public final class FKConnection: FKConnectionProtocol {
     
     private var transmitter: (FKTransmitter) -> Void = { _ in }
     private var timer: DispatchSourceTimer?
-    private let framer = FKConnectionFramer()
     private let queue: DispatchQueue
+    private let framer = FKConnectionFramer()
     private let connection: NWConnection
     private let monitor = NWPathMonitor()
     
@@ -35,7 +35,7 @@ public final class FKConnection: FKConnectionProtocol {
         self.queue = queue
     }
     
-    /// Start a connecting to a host
+    /// Start a connection
     public func start() -> Void {
         timeout(); handler(); receive(); satisfied()
         monitor.start(queue: queue)
