@@ -39,7 +39,7 @@ internal extension Int {
     static var minimum: Int { 0x1 }
     
     /// Maximum size of received bytes
-    static var maximum: Int { 0x10000 }
+    static var maximum: Int { 0x2000 }
     
     /// Maximum Segment Size
     static var mtu: Int { 0x5A0 }
