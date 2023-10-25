@@ -18,11 +18,10 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: generic Result type returning data and possible error
     internal func create<T: FKConnectionMessage>(message: T) -> Result<Data, Error> {
-        guard message.raw.count <= FKConnectionNumbers.frame.rawValue - FKConnectionNumbers.overhead.rawValue else { return .failure(FKConnectionError.writeBufferOverflow) }
+        guard message.raw.count <= FKConnectionNumbers.frame.rawValue - FKConnectionNumbers.control.rawValue else { return .failure(FKConnectionError.writeBufferOverflow) }
         var frame = Data()
         frame.append(message.opcode)
-        frame.append(UInt32(message.raw.count + FKConnectionNumbers.overhead.rawValue).bigEndianBytes)
-        frame.append(Data(SHA256.hash(data: frame.prefix(FKConnectionNumbers.control.rawValue))))
+        frame.append(UInt32(message.raw.count + FKConnectionNumbers.control.rawValue).bigEndianBytes)
         frame.append(message.raw)
         return .success(frame)
     }
@@ -36,9 +35,8 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
         buffer.append(data)
         guard let length = extractSize() else { return }
         guard buffer.count <= FKConnectionNumbers.frame.rawValue else { completion(.failure(FKConnectionError.readBufferOverflow)); return }
-        guard buffer.count >= FKConnectionNumbers.overhead.rawValue, buffer.count >= length else { return }
+        guard buffer.count >= FKConnectionNumbers.control.rawValue, buffer.count >= length else { return }
         while buffer.count >= length && length != .zero {
-            guard SHA256.hash(data: buffer.prefix(FKConnectionNumbers.control.rawValue)) == extractHash() else { completion(.failure(FKConnectionError.hashMismatch)); return }
             guard let bytes = extractMessage() else { completion(.failure(FKConnectionError.parsingFailed)); return }
             switch buffer.first {
             case FKConnectionOpcodes.binary.rawValue: completion(.success(bytes))
@@ -53,20 +51,11 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
 // MARK: - Private API Extension -
 
 private extension FKConnectionFramer {
-    /// Extract the message hash from the data,
-    /// if not possible it returns nil
-    /// - Returns: a `SHA256Digest`
-    private func extractHash() -> SHA256Digest? {
-        guard buffer.count >= FKConnectionNumbers.overhead.rawValue else { return nil }
-        let hash = buffer.subdata(in: FKConnectionNumbers.control.rawValue..<FKConnectionNumbers.overhead.rawValue).withUnsafeBytes { $0.load(as: SHA256.Digest.self) }
-        return hash
-    }
-    
     /// Extract the message frame size from the data,
     /// if not possible it returns nil
     /// - Returns: the size as `UInt32`
     private func extractSize() -> UInt32? {
-        guard buffer.count >= FKConnectionNumbers.overhead.rawValue else { return nil }
+        guard buffer.count >= FKConnectionNumbers.control.rawValue else { return nil }
         let size = buffer.subdata(in: FKConnectionNumbers.opcode.rawValue..<FKConnectionNumbers.control.rawValue)
         return size.bigEndian
     }
@@ -75,9 +64,9 @@ private extension FKConnectionFramer {
     /// if not possible it returns nil
     /// - Returns: the extracted message as `Data`
     private func extractMessage() -> Data? {
-        guard buffer.count >= FKConnectionNumbers.overhead.rawValue else { return nil }
+        guard buffer.count >= FKConnectionNumbers.control.rawValue else { return nil }
         guard let length = extractSize() else { return nil }
-        guard length > FKConnectionNumbers.overhead.rawValue else { return Data() }
-        return buffer.subdata(in: FKConnectionNumbers.overhead.rawValue..<Int(length))
+        guard length > FKConnectionNumbers.control.rawValue else { return Data() }
+        return buffer.subdata(in: FKConnectionNumbers.control.rawValue..<Int(length))
     }
 }

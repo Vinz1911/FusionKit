@@ -20,6 +20,5 @@ internal enum FKConnectionOpcodes: UInt8 {
 internal enum FKConnectionNumbers: Int {
     case opcode = 0x1
     case control = 0x5
-    case overhead = 0x25
     case frame = 0xFFFFFFFF
 }
