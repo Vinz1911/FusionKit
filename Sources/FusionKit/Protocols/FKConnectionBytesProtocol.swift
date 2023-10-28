@@ -11,6 +11,7 @@ import Foundation
 internal protocol FKConnectionBytesProtocol {
     /// Input Bytes if available
     var input: Int? { get set }
+    
     /// Output Bytes if available
     var output: Int? { get set }
 }

@@ -18,10 +18,10 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: generic Result type returning data and possible error
     internal func create<T: FKConnectionMessage>(message: T) -> Result<Data, Error> {
-        guard message.raw.count <= FKConnectionNumbers.frame.rawValue - FKConnectionNumbers.control.rawValue else { return .failure(FKConnectionError.writeBufferOverflow) }
+        guard message.raw.count <= FKConnectionConstants.frame.rawValue - FKConnectionConstants.control.rawValue else { return .failure(FKConnectionError.writeBufferOverflow) }
         var frame = Data()
         frame.append(message.opcode)
-        frame.append(UInt32(message.raw.count + FKConnectionNumbers.control.rawValue).bigEndianBytes)
+        frame.append(UInt32(message.raw.count + FKConnectionConstants.control.rawValue).bigEndianBytes)
         frame.append(message.raw)
         return .success(frame)
     }
@@ -34,8 +34,8 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     internal func parse(data: Data, _ completion: (Result<FKConnectionMessage, Error>) -> Void) -> Void {
         buffer.append(data)
         guard let length = extractSize() else { return }
-        guard buffer.count <= FKConnectionNumbers.frame.rawValue else { completion(.failure(FKConnectionError.readBufferOverflow)); return }
-        guard buffer.count >= FKConnectionNumbers.control.rawValue, buffer.count >= length else { return }
+        guard buffer.count <= FKConnectionConstants.frame.rawValue else { completion(.failure(FKConnectionError.readBufferOverflow)); return }
+        guard buffer.count >= FKConnectionConstants.control.rawValue, buffer.count >= length else { return }
         while buffer.count >= length && length != .zero {
             guard let bytes = extractMessage() else { completion(.failure(FKConnectionError.parsingFailed)); return }
             switch buffer.first {
@@ -55,8 +55,8 @@ private extension FKConnectionFramer {
     /// if not possible it returns nil
     /// - Returns: the size as `UInt32`
     private func extractSize() -> UInt32? {
-        guard buffer.count >= FKConnectionNumbers.control.rawValue else { return nil }
-        let size = buffer.subdata(in: FKConnectionNumbers.opcode.rawValue..<FKConnectionNumbers.control.rawValue)
+        guard buffer.count >= FKConnectionConstants.control.rawValue else { return nil }
+        let size = buffer.subdata(in: FKConnectionConstants.opcode.rawValue..<FKConnectionConstants.control.rawValue)
         return size.bigEndian
     }
     
@@ -64,9 +64,9 @@ private extension FKConnectionFramer {
     /// if not possible it returns nil
     /// - Returns: the extracted message as `Data`
     private func extractMessage() -> Data? {
-        guard buffer.count >= FKConnectionNumbers.control.rawValue else { return nil }
+        guard buffer.count >= FKConnectionConstants.control.rawValue else { return nil }
         guard let length = extractSize() else { return nil }
-        guard length > FKConnectionNumbers.control.rawValue else { return Data() }
-        return buffer.subdata(in: FKConnectionNumbers.control.rawValue..<Int(length))
+        guard length > FKConnectionConstants.control.rawValue else { return Data() }
+        return buffer.subdata(in: FKConnectionConstants.control.rawValue..<Int(length))
     }
 }

@@ -14,7 +14,6 @@ public enum FKConnectionError: Error {
     case missingPort
     case connectionTimeout
     case connectionUnsatisfied
-    case hashMismatch
     case parsingFailed
     case readBufferOverflow
     case writeBufferOverflow
@@ -25,7 +24,6 @@ public enum FKConnectionError: Error {
         case .missingPort: return "missing port"
         case .connectionTimeout: return "connection timeout"
         case .connectionUnsatisfied: return "connection path is not satisfied"
-        case .hashMismatch: return "message hash does not match"
         case .parsingFailed: return "message parsing failed"
         case .readBufferOverflow: return "read buffer overflow"
         case .writeBufferOverflow: return "write buffer overflow" }

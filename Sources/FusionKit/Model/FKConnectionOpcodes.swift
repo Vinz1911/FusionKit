@@ -17,7 +17,7 @@ internal enum FKConnectionOpcodes: UInt8 {
 }
 
 /// Protocol byte numbers
-internal enum FKConnectionNumbers: Int {
+internal enum FKConnectionConstants: Int {
     case opcode = 0x1
     case control = 0x5
     case frame = 0xFFFFFFFF
