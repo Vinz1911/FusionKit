@@ -48,10 +48,13 @@ public final class FKConnection: FKConnectionProtocol {
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
     public func send<T: FKConnectionMessage>(message: T) -> Void {
-        let message = framer.create(message: message)
-        switch message {
-        case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { processing(with: data) } }
-        case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
+        self.queue.async { [weak self] in
+            guard let self else { return }
+            let message = framer.create(message: message)
+            switch message {
+            case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { processing(with: data) } }
+            case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
+        }
     }
     
     /// Receive a message from a connected host
@@ -110,9 +113,12 @@ private extension FKConnection {
     
     /// Clean and cancel connection
     private func cleanup() -> Void {
-        invalidate()
-        connection.cancel()
-        framer.reset()
+        self.queue.async { [weak self] in
+            guard let self else { return }
+            invalidate()
+            connection.cancel()
+            framer.reset()
+        }
     }
     
     /// Connection state update handler,
