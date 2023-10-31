@@ -54,4 +54,9 @@ internal extension Data {
         guard !self.isEmpty else { return .zero }
         return UInt32(bigEndian: withUnsafeBytes { $0.load(as: UInt32.self) })
     }
+    
+    /// Convert `Data` into `DispatchData`
+    var dispatchData: DispatchData {
+        return withUnsafeBytes { DispatchData(bytes: $0) }
+    }
 }
