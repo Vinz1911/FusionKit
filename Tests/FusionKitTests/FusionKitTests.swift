@@ -63,6 +63,7 @@ class FusionKitTests: XCTestCase {
         XCTAssertEqual(FKConnectionError.parsingFailed.description, "message parsing failed")
         XCTAssertEqual(FKConnectionError.readBufferOverflow.description, "read buffer overflow")
         XCTAssertEqual(FKConnectionError.writeBufferOverflow.description, "write buffer overflow")
+        XCTAssertEqual(FKConnectionError.unexpectedOpcode.description, "unexpected opcode")
         
         exp.fulfill()
         wait(for: [exp], timeout: timeout)

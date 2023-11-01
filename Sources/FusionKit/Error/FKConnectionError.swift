@@ -17,6 +17,7 @@ public enum FKConnectionError: Error {
     case parsingFailed
     case readBufferOverflow
     case writeBufferOverflow
+    case unexpectedOpcode
     
     public var description: String {
         switch self {
@@ -26,6 +27,7 @@ public enum FKConnectionError: Error {
         case .connectionUnsatisfied: return "connection path is not satisfied"
         case .parsingFailed: return "message parsing failed"
         case .readBufferOverflow: return "read buffer overflow"
-        case .writeBufferOverflow: return "write buffer overflow" }
+        case .writeBufferOverflow: return "write buffer overflow"
+        case .unexpectedOpcode: return "unexpected opcode" }
     }
 }

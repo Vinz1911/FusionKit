@@ -42,7 +42,7 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
             case FKConnectionOpcodes.binary.rawValue: completion(.success(bytes))
             case FKConnectionOpcodes.ping.rawValue: completion(.success(UInt16(bytes.count)))
             case FKConnectionOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(.success(result))
-            default: completion(.failure(FKConnectionError.parsingFailed)) }
+            default: completion(.failure(FKConnectionError.unexpectedOpcode)) }
             if buffer.count <= length { reset() } else { buffer = buffer.subdata(in: .init(length)..<buffer.count) }
         }
     }
