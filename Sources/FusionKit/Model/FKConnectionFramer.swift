@@ -10,8 +10,8 @@ import Foundation
 import CryptoKit
 
 internal final class FKConnectionFramer: FKConnectionFramerProtocol {
-    private var buffer = DispatchData.empty
-    internal func reset() { buffer = DispatchData.empty }
+    private var buffer: DispatchData = .empty
+    internal func reset() { buffer = .empty }
     
     /// Create a protocol conform message frame
     ///
@@ -43,7 +43,7 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
             case FKConnectionOpcodes.ping.rawValue: completion(.success(UInt16(bytes.count)))
             case FKConnectionOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(.success(result))
             default: completion(.failure(FKConnectionError.parsingFailed)) }
-            if buffer.count <= length { reset() } else { buffer = buffer.subdata(in: DispatchData.Index(length)..<buffer.count) }
+            if buffer.count <= length { reset() } else { buffer = buffer.subdata(in: .init(length)..<buffer.count) }
         }
     }
 }
