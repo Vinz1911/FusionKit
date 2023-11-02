@@ -13,9 +13,18 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     private var buffer: DispatchData = .empty
     internal func reset() { buffer = .empty }
     
+    /// The `FKConnectionFramer` represents the fusion framing protocol.
+    /// This is a very fast and lightweight message framing protocol that supports `String` and `Data` based messages.
+    /// It also supports `UInt16` for ping based transfer responses.
+    /// The protocol's overhead per message is only `0x5` bytes, resulting in high performance.
+    ///
+    /// This protocol is based on a standardized Type-Length-Value Design Scheme.
+    
+    internal required init() { }
+    
     /// Create a protocol conform message frame
     ///
-    /// - Parameter message: generic type which conforms to 'Data' and 'String'
+    /// - Parameter message: generic type which conforms to `Data` and `String`
     /// - Returns: generic Result type returning data and possible error
     internal func create<T: FKConnectionMessage>(message: T) -> Result<Data, Error> {
         guard message.raw.count <= FKConnectionConstants.frame.rawValue - FKConnectionConstants.control.rawValue else { return .failure(FKConnectionError.writeBufferOverflow) }

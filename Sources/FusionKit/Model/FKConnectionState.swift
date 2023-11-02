@@ -16,17 +16,17 @@ public struct FKConnectionBytes: FKConnectionBytesProtocol {
 
 // MARK: - State Types -
 
-/// The `FKTransmitter` internal message transmitter
-@frozen
-internal enum FKTransmitter {
-    case message(FKConnectionMessage)
-    case bytes(FKConnectionBytes)
-}
-
 /// The `FKConnectionState` state handler
 @frozen
 public enum FKConnectionState {
     case ready
     case cancelled
     case failed(Error?)
+}
+
+/// The `FKTransmitter` internal message transmitter
+@frozen
+internal enum FKTransmitter {
+    case message(FKConnectionMessage)
+    case bytes(FKConnectionBytes)
 }

@@ -9,6 +9,7 @@
 import Foundation
 
 /// Opcodes for framing
+@frozen
 internal enum FKConnectionOpcodes: UInt8 {
     case none = 0x0
     case text = 0x1
@@ -17,6 +18,7 @@ internal enum FKConnectionOpcodes: UInt8 {
 }
 
 /// Protocol byte numbers
+@frozen
 internal enum FKConnectionConstants: Int {
     case opcode = 0x1
     case control = 0x5
