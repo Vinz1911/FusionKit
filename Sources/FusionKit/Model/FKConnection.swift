@@ -17,7 +17,6 @@ public final class FKConnection: FKConnectionProtocol {
     private let queue: DispatchQueue
     private let framer = FKConnectionFramer()
     private let connection: NWConnection
-    private let monitor = NWPathMonitor()
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
@@ -37,8 +36,8 @@ public final class FKConnection: FKConnectionProtocol {
     
     /// Start a connection
     public func start() -> Void {
-        timeout(); handler(); receive(); satisfied()
-        monitor.start(queue: queue)
+        timeout(); handler(); receive()
+        connection.start(queue: queue)
     }
     
     /// Cancel the current connection
@@ -49,7 +48,7 @@ public final class FKConnection: FKConnectionProtocol {
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
     public func send<T: FKConnectionMessage>(message: T) -> Void {
-        queue.async { [weak self] in
+        self.queue.async { [weak self] in
             guard let self else { return }
             let message = framer.create(message: message)
             switch message {
@@ -87,17 +86,6 @@ private extension FKConnection {
         timer.cancel(); self.timer = nil
     }
     
-    /// Check if path is available
-    private func satisfied() -> Void {
-        monitor.pathUpdateHandler = { [weak self] path in
-            guard let self else { return }
-            switch path.status {
-            case .satisfied: connection.start(queue: queue)
-            case .unsatisfied: cleanup(); stateUpdateHandler(.failed(FKConnectionError.connectionUnsatisfied))
-            default: break }
-        }
-    }
-    
     /// Process message data and send it to a host
     /// - Parameter data: message data
     private func processing(with data: Data) -> Void {
@@ -125,10 +113,9 @@ private extension FKConnection {
     
     /// Clean and cancel connection
     private func cleanup() -> Void {
-        queue.async(flags: .barrier) { [weak self] in
+        self.queue.async { [weak self] in
             guard let self else { return }
             invalidate()
-            monitor.cancel()
             connection.cancel()
             framer.reset()
         }
@@ -141,8 +128,8 @@ private extension FKConnection {
             guard let self else { return }
             switch state {
             case .cancelled: stateUpdateHandler(.cancelled)
-            case .failed(let error), .waiting(let error): stateUpdateHandler(.failed(error)); cleanup()
-            case .ready: stateUpdateHandler(.ready); invalidate()
+            case .failed(let error), .waiting(let error): cleanup(); stateUpdateHandler(.failed(error))
+            case .ready: invalidate(); stateUpdateHandler(.ready)
             default: break }
         }
     }

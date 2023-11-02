@@ -39,25 +39,24 @@ internal extension Int {
     static var minimum: Int { 0x1 }
     
     /// Maximum size of received bytes
-    static var maximum: Int { 0x2000 }
-    
-    /// Maximum Segment Size
-    static var mtu: Int { 0x5A0 }
+    static var maximum: Int { 0x8000 }
 }
 
 internal extension Data {
     /// Slice data into chunks
     var chunks: [Data] {
-        var size = self.count / 0xFF
-        size = Swift.max(Int.mtu, Swift.min(size, Int.maximum))
-        return stride(from: .zero, to: self.count, by: size).map { Data(self[$0..<Swift.min($0 + size, self.count)]) }
+        let size = Int.maximum
+        return stride(from: .zero, to: count, by: size).map { subdata(in: $0..<(count - $0 > size ? $0 + size : count)) }
     }
     
     /// Extract integers from data as big endian
     var bigEndian: UInt32 {
         guard !self.isEmpty else { return .zero }
-        return UInt32(bigEndian: withUnsafeBytes { bytes in
-            bytes.load(as: UInt32.self)
-        })
+        return UInt32(bigEndian: withUnsafeBytes { $0.load(as: UInt32.self) })
+    }
+    
+    /// Convert `Data` into `DispatchData`
+    var dispatchData: DispatchData {
+        return withUnsafeBytes { DispatchData(bytes: $0) }
     }
 }
