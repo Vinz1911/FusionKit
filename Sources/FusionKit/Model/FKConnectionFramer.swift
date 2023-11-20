@@ -10,7 +10,7 @@ import Foundation
 import CryptoKit
 
 internal final class FKConnectionFramer: FKConnectionFramerProtocol {
-    private var buffer: DispatchData = .empty
+    private var buffer: DispatchData
     internal func reset() { buffer = .empty }
     
     /// The `FKConnectionFramer` represents the fusion framing protocol.
@@ -20,7 +20,9 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     ///
     /// This protocol is based on a standardized Type-Length-Value Design Scheme.
     
-    internal required init() { }
+    internal required init(buffer: DispatchData = .empty) {
+        self.buffer = buffer
+    }
     
     /// Create a protocol conform message frame
     ///
@@ -46,7 +48,7 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
         guard buffer.count <= FKConnectionConstants.frame.rawValue else { completion(.failure(FKConnectionError.readBufferOverflow)); return }
         guard buffer.count >= FKConnectionConstants.control.rawValue, buffer.count >= length else { return }
         while buffer.count >= length && length != .zero {
-            guard let bytes = extractMessage() else { completion(.failure(FKConnectionError.parsingFailed)); return }
+            guard let bytes = extractMessage(length: length) else { completion(.failure(FKConnectionError.parsingFailed)); return }
             switch buffer.first {
             case FKConnectionOpcodes.binary.rawValue: completion(.success(bytes))
             case FKConnectionOpcodes.ping.rawValue: completion(.success(UInt16(bytes.count)))
@@ -71,10 +73,10 @@ private extension FKConnectionFramer {
     
     /// Extract the message and remove the overhead,
     /// if not possible it returns nil
+    /// - Parameter length: the length of the extracting message
     /// - Returns: the extracted message as `Data`
-    private func extractMessage() -> Data? {
+    private func extractMessage(length: UInt32) -> Data? {
         guard buffer.count >= FKConnectionConstants.control.rawValue else { return nil }
-        guard let length = extractSize() else { return nil }
         guard length > FKConnectionConstants.control.rawValue else { return Data() }
         return Data(buffer.subdata(in: FKConnectionConstants.control.rawValue..<Int(length)))
     }
