@@ -27,9 +27,8 @@ public final class FKConnection: FKConnectionProtocol {
     ///   - port: the host port
     ///   - parameters: network parameters
     ///   - queue: dispatch queue
-    public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString)) {
-        if host.isEmpty { fatalError(FKConnectionError.missingHost.description) }
-        if port == .zero { fatalError(FKConnectionError.missingPort.description) }
+    public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString, qos: .userInteractive)) {
+        if host.isEmpty { fatalError(FKConnectionError.missingHost.description) }; if port == .zero { fatalError(FKConnectionError.missingPort.description) }
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
         self.queue = queue
     }
@@ -115,9 +114,7 @@ private extension FKConnection {
     private func cleanup() -> Void {
         self.queue.async { [weak self] in
             guard let self else { return }
-            invalidate()
-            connection.cancel()
-            framer.reset()
+            invalidate(); connection.cancel(); framer.reset()
         }
     }
     

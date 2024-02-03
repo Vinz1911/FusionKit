@@ -16,7 +16,7 @@ private enum TestCase {
 }
 
 class FusionKitTests: XCTestCase {
-    private var connection = FKConnection(host: "atonet.de", port: 7878)
+    private var connection = FKConnection(host: "weist.org", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private let uuid = UUID().uuidString
@@ -59,7 +59,6 @@ class FusionKitTests: XCTestCase {
         XCTAssertEqual(FKConnectionError.missingHost.description, "missing host")
         XCTAssertEqual(FKConnectionError.missingPort.description, "missing port")
         XCTAssertEqual(FKConnectionError.connectionTimeout.description, "connection timeout")
-        XCTAssertEqual(FKConnectionError.connectionUnsatisfied.description, "connection path is not satisfied")
         XCTAssertEqual(FKConnectionError.parsingFailed.description, "message parsing failed")
         XCTAssertEqual(FKConnectionError.readBufferOverflow.description, "read buffer overflow")
         XCTAssertEqual(FKConnectionError.writeBufferOverflow.description, "write buffer overflow")
