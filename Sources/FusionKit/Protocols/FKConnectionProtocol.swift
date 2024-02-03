@@ -10,7 +10,7 @@ import Foundation
 import Network
 
 internal protocol FKConnectionProtocol {
-    /// Access to connection State's
+    /// The `FKConnectionState` update values
     var stateUpdateHandler: (FKConnectionState) -> Void { get set }
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.

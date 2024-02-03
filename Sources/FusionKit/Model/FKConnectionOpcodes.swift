@@ -17,7 +17,7 @@ internal enum FKConnectionOpcodes: UInt8 {
     case ping = 0x3
 }
 
-/// Protocol byte numbers
+/// Protocol byte constants
 @frozen
 internal enum FKConnectionConstants: Int {
     case opcode = 0x1
