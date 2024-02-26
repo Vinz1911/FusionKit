@@ -136,7 +136,11 @@ private extension FKConnection {
         connection.batch {
             connection.receive(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
                 guard let self else { return }
-                if let error, error != NWError.posix(.ECANCELED) { stateUpdateHandler(.failed(error)); cleanup(); return }
+                if let error {
+                    guard error != NWError.posix(.ECANCELED) else { return }
+                    stateUpdateHandler(.failed(error)); cleanup()
+                    return
+                }
                 if let data { processing(from: data) }
                 if isComplete { cleanup() } else { receive() }
             }
