@@ -10,7 +10,7 @@ import Foundation
 import StoreKit
 
 /// Protocol for message compliance
-public protocol FKConnectionMessage: Sendable {
+public protocol FKConnectionMessage {
     var opcode: UInt8 { get }
     var raw: Data { get }
 }

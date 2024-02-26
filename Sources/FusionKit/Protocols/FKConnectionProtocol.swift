@@ -9,7 +9,7 @@
 import Foundation
 import Network
 
-public protocol FKConnectionProtocol: Sendable {
+public protocol FKConnectionProtocol {
     /// The `FKConnectionState` update values
     var stateUpdateHandler: (FKConnectionState) -> Void { get set }
     
