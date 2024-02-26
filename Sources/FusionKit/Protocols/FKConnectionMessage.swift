@@ -10,25 +10,25 @@ import Foundation
 import StoreKit
 
 /// Protocol for message compliance
-public protocol FKConnectionMessage {
+public protocol FKConnectionMessage: Sendable {
     var opcode: UInt8 { get }
     var raw: Data { get }
 }
 
 /// Conformance to protocol 'FKConnectionMessage'
-extension UInt16: FKConnectionMessage {
+extension UInt16: FKConnectionMessage, Sendable {
     public var opcode: UInt8 { FKConnectionOpcodes.ping.rawValue }
     public var raw: Data { Data(count: Int(self)) }
 }
 
 /// Conformance to protocol 'FKConnectionMessage'
-extension String: FKConnectionMessage {
+extension String: FKConnectionMessage, Sendable {
     public var opcode: UInt8 { FKConnectionOpcodes.text.rawValue }
     public var raw: Data { Data(self.utf8) }
 }
 
 /// Conformance to protocol 'FKConnectionMessage'
-extension Data: FKConnectionMessage {
+extension Data: FKConnectionMessage, Sendable {
     public var opcode: UInt8 { FKConnectionOpcodes.binary.rawValue }
     public var raw: Data { self }
 }

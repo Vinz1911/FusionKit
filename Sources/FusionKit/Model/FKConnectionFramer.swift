@@ -9,7 +9,7 @@
 import Foundation
 import CryptoKit
 
-internal final class FKConnectionFramer: FKConnectionFramerProtocol {
+internal final class FKConnectionFramer: FKConnectionFramerProtocol, @unchecked Sendable {
     private var buffer: DispatchData
     internal func reset() { buffer = .empty }
     
