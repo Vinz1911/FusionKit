@@ -16,19 +16,19 @@ public protocol FKConnectionMessage: Sendable {
 }
 
 /// Conformance to protocol 'FKConnectionMessage'
-extension UInt16: FKConnectionMessage, Sendable {
+extension UInt16: FKConnectionMessage {
     public var opcode: UInt8 { FKConnectionOpcodes.ping.rawValue }
     public var raw: Data { Data(count: Int(self)) }
 }
 
 /// Conformance to protocol 'FKConnectionMessage'
-extension String: FKConnectionMessage, Sendable {
+extension String: FKConnectionMessage {
     public var opcode: UInt8 { FKConnectionOpcodes.text.rawValue }
     public var raw: Data { Data(self.utf8) }
 }
 
 /// Conformance to protocol 'FKConnectionMessage'
-extension Data: FKConnectionMessage, Sendable {
+extension Data: FKConnectionMessage {
     public var opcode: UInt8 { FKConnectionOpcodes.binary.rawValue }
     public var raw: Data { self }
 }

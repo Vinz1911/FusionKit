@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal protocol FKConnectionBytesProtocol: Sendable {
+internal protocol FKConnectionBytesProtocol {
     /// Input Bytes if available
     var input: Int? { get set }
     

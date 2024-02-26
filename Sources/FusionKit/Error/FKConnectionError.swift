@@ -10,7 +10,7 @@ import Foundation
 
 /// The `FKConnection` specific errors
 @frozen
-public enum FKConnectionError: Error, Sendable {
+public enum FKConnectionError: Error {
     case missingHost
     case missingPort
     case connectionTimeout

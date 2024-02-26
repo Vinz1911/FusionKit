@@ -10,7 +10,7 @@ import Foundation
 
 /// Opcodes for framing
 @frozen
-internal enum FKConnectionOpcodes: UInt8, Sendable {
+internal enum FKConnectionOpcodes: UInt8 {
     case none = 0x0
     case text = 0x1
     case binary = 0x2
@@ -19,7 +19,7 @@ internal enum FKConnectionOpcodes: UInt8, Sendable {
 
 /// Protocol byte constants
 @frozen
-internal enum FKConnectionConstants: Int, Sendable {
+internal enum FKConnectionConstants: Int {
     case opcode = 0x1
     case control = 0x5
     case frame = 0xFFFFFFFF

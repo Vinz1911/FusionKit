@@ -26,7 +26,7 @@ public enum FKConnectionState: Sendable {
 
 /// The `FKTransmitter` internal message transmitter
 @frozen
-internal enum FKTransmitter: Sendable {
+internal enum FKTransmitter {
     case message(FKConnectionMessage)
     case bytes(FKConnectionBytes)
 }
