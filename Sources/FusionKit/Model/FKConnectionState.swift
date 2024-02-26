@@ -9,7 +9,7 @@
 import Foundation
 
 /// The `FKConnectionBytes` for input and output bytes
-public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
+public struct FKConnectionBytes: FKConnectionBytesProtocol, @unchecked Sendable {
     public var input: Int?
     public var output: Int?
 }
@@ -18,7 +18,7 @@ public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
 
 /// The `FKConnectionState` state handler
 @frozen
-public enum FKConnectionState: Sendable {
+public enum FKConnectionState: @unchecked Sendable {
     case ready
     case cancelled
     case failed(Error?)
