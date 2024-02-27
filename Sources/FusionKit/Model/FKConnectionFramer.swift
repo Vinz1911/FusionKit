@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal final class FKConnectionFramer: FKConnectionFramerProtocol, @unchecked Sendable {
+internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     private var buffer: DispatchData
     internal func reset() { buffer = .empty }
     
