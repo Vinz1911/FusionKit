@@ -16,7 +16,7 @@ private enum TestCase {
 }
 
 class FusionKitTests: XCTestCase {
-    private var connection = FKConnection(host: "weist.org", port: 7878)
+    private var connection = FKConnection(host: "measure.weist.org", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private let uuid = UUID().uuidString

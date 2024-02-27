@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import CryptoKit
 
 internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     private var buffer: DispatchData

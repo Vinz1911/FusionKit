@@ -19,9 +19,9 @@ internal extension Timer {
     ///   - completion: completion
     /// - Returns: a source timer
     static func timeout(after: TimeInterval = 3.0, _ completion: @escaping () -> Void) -> DispatchSourceTimer {
-        let dispatchTimer = DispatchSource.makeTimerSource(flags: .strict, queue: DispatchQueue(label: UUID().uuidString, qos: .userInteractive))
+        let dispatchTimer = DispatchSource.makeTimerSource(flags: .strict, queue: .init(label: UUID().uuidString, qos: .userInteractive))
         dispatchTimer.setEventHandler(handler: completion)
-        dispatchTimer.schedule(deadline: .now() + after, repeating: .never)
+        dispatchTimer.schedule(deadline: .now() + after, repeating: .never, leeway: .nanoseconds(.zero))
         dispatchTimer.resume()
         return dispatchTimer
     }
