@@ -41,8 +41,8 @@ internal final class FKConnectionFramer: FKConnectionFramerProtocol {
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns generic Result type with parsed message and possible error
-    internal func parse(data: Data, _ completion: (Result<FKConnectionMessage, Error>) -> Void) -> Void {
-        buffer.append(data.dispatchData)
+    internal func parse(data: DispatchData, _ completion: (Result<FKConnectionMessage, Error>) -> Void) -> Void {
+        buffer.append(data)
         guard let length = extractSize() else { return }
         guard buffer.count <= FKConnectionConstants.frame.rawValue else { completion(.failure(FKConnectionError.readBufferOverflow)); return }
         guard buffer.count >= FKConnectionConstants.control.rawValue, buffer.count >= length else { return }

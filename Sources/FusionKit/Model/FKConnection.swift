@@ -17,6 +17,7 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     private let queue: DispatchQueue
     private let framer = FKConnectionFramer()
     private let connection: NWConnection
+    private var active: Bool = false
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
@@ -35,8 +36,11 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     
     /// Start a connection
     public func start() -> Void {
-        timeout(); handler(); receive()
-        connection.start(queue: queue)
+        queue.async { [weak self] in guard let self else { return }
+            guard !active else { return }
+            timeout(); handler(); receive(); active = true
+            connection.start(queue: queue)
+        }
     }
     
     /// Cancel the current connection
@@ -73,7 +77,7 @@ private extension FKConnection {
     /// Start timeout and cancel connection,
     /// if timeout value is reached
     private func timeout() -> Void {
-        timer = Timer.timeout { [weak self] in
+        timer = Timer.timeout(queue: queue) { [weak self] in
             guard let self else { return }
             cleanup(); stateUpdateHandler(.failed(FKConnectionError.connectionTimeout))
         }
@@ -100,21 +104,21 @@ private extension FKConnection {
     
     /// Process message data and parse it into a conform message
     /// - Parameter data: message data
-    private func processing(from data: Data) -> Void {
+    private func processing(from data: DispatchData) -> Void {
+        transmitter(.bytes(.init(input: data.count)))
         framer.parse(data: data) { [weak self] result in
             guard let self else { return }
             switch result {
             case .success(let message): transmitter(.message(message))
             case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
         }
-        transmitter(.bytes(.init(input: data.count)))
     }
     
     /// Clean and cancel connection
     private func cleanup() -> Void {
         self.queue.async { [weak self] in
             guard let self else { return }
-            invalidate(); connection.cancel(); framer.reset()
+            invalidate(); connection.cancel(); framer.reset(); active = false
         }
     }
     
@@ -134,7 +138,7 @@ private extension FKConnection {
     /// Receives tcp data and parse it into a message frame
     private func receive() -> Void {
         connection.batch {
-            connection.receive(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
+            connection.receiveDiscontiguous(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
                 guard let self else { return }
                 if let error { guard error != NWError.posix(.ECANCELED) else { return }; stateUpdateHandler(.failed(error)); cleanup(); return }
                 if let data { processing(from: data) }
