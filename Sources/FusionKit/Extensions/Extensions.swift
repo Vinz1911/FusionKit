@@ -18,8 +18,8 @@ internal extension Timer {
     ///   - after: executed after given time
     ///   - completion: completion
     /// - Returns: a source timer
-    static func timeout(after: TimeInterval = 3.0, _ completion: @escaping () -> Void) -> DispatchSourceTimer {
-        let dispatchTimer = DispatchSource.makeTimerSource(flags: .strict, queue: .init(label: UUID().uuidString, qos: .userInteractive))
+    static func timeout(after: TimeInterval = 3.0, queue: DispatchQueue = .init(label: UUID().uuidString), _ completion: @escaping () -> Void) -> DispatchSourceTimer {
+        let dispatchTimer = DispatchSource.makeTimerSource(flags: .strict, queue: queue)
         dispatchTimer.setEventHandler(handler: completion)
         dispatchTimer.schedule(deadline: .now() + after, repeating: .never, leeway: .nanoseconds(.zero))
         dispatchTimer.resume()
@@ -53,10 +53,5 @@ internal extension Data {
     var bigEndian: UInt32 {
         guard !self.isEmpty else { return .zero }
         return UInt32(bigEndian: withUnsafeBytes { $0.load(as: UInt32.self) })
-    }
-    
-    /// Convert `Data` into `DispatchData`
-    var dispatchData: DispatchData {
-        return withUnsafeBytes { DispatchData(bytes: $0) }
     }
 }

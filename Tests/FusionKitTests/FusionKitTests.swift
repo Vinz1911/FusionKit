@@ -42,6 +42,11 @@ class FusionKitTests: XCTestCase {
         start(test: .ping)
     }
     
+    /// Start test sending and cancel
+    func testCancel() {
+        start(test: .data, cancel: true)
+    }
+    
     /// Start test creating and parsing string based message
     func testParsingStringMessage() {
         let message = uuid
@@ -74,10 +79,11 @@ class FusionKitTests: XCTestCase {
 private extension FusionKitTests {
     /// Create a connection and start
     /// - Parameter test: test case
-    private func start(test: TestCase) {
+    private func start(test: TestCase, cancel: Bool = false) {
         stateUpdateHandler(connection: connection, test: test)
         connection.receive { [weak self] message, bytes in
             guard let self else { return }
+            if cancel { connection.cancel() }
             if let message { handleMessages(message: message) }
         }
         connection.start()
@@ -90,7 +96,8 @@ private extension FusionKitTests {
         let message = framer.create(message: message)
         switch message {
         case .success(let data):
-            framer.parse(data: data) { result in
+            let dispatch = data.withUnsafeBytes { DispatchData(bytes: $0) }
+            framer.parse(data: dispatch) { result in
                 switch result {
                 case .success(let message):
                     if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
@@ -131,7 +138,7 @@ private extension FusionKitTests {
                 if test == .string { connection.send(message: buffer) }
                 if test == .data { connection.send(message: Data(count: Int(buffer)!)) }
                 if test == .ping { connection.send(message: UInt16(buffer)!) }
-            case .cancelled: break
+            case .cancelled: exp.fulfill()
             case .failed(let error):
                 guard let error else { return }
                 XCTFail("failed with error: \(error)") }
