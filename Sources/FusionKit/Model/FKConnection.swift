@@ -39,8 +39,7 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
         queue.async { [weak self] in guard let self else { return }
             guard !active else { return }
             timeout(); handler(); receive(); active = true
-            connection.start(queue: queue)
-        }
+        }; connection.start(queue: queue)
     }
     
     /// Cancel the current connection
@@ -118,8 +117,8 @@ private extension FKConnection {
     private func cleanup() -> Void {
         self.queue.async { [weak self] in
             guard let self else { return }
-            invalidate(); connection.cancel(); framer.reset(); active = false
-        }
+            invalidate(); framer.reset(); active = false
+        }; connection.cancel()
     }
     
     /// Connection state update handler,
