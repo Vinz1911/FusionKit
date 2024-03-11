@@ -14,19 +14,9 @@ public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
     public var output: Int?
 }
 
-// MARK: - State Types -
-
-/// The `FKConnectionState` state handler
+/// The `FKConnectionResult` message result
 @frozen
-public enum FKConnectionState: Sendable {
-    case ready
-    case cancelled
-    case failed(Error?)
-}
-
-/// The `FKTransmitter` internal message transmitter
-@frozen
-internal enum FKTransmitter {
+public enum FKConnectionResult {
     case message(FKConnectionMessage)
     case bytes(FKConnectionBytes)
 }

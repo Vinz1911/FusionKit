@@ -77,16 +77,11 @@ class FusionKitTests: XCTestCase {
 // MARK: - Private API Extension -
 
 private extension FusionKitTests {
-    /// Create a connection and start
-    /// - Parameter test: test case
     private func start(test: TestCase, cancel: Bool = false) {
-        stateUpdateHandler(connection: connection, test: test)
-        connection.receive { [weak self] message, bytes in
-            guard let self else { return }
-            if cancel { connection.cancel() }
-            if let message { handleMessages(message: message) }
+        let multi = Mulitask()
+        Task {
+            await multi.start()
         }
-        connection.start()
         wait(for: [exp], timeout: timeout)
     }
     
@@ -107,41 +102,32 @@ private extension FusionKitTests {
         case .failure(let error): XCTFail("failed with error: \(error)") }
         wait(for: [exp], timeout: timeout)
     }
+}
+
+
+internal actor Mulitask {
+    private var sockets: [FKConnection] = []
+    private var counter: Int = .zero
     
-    /// Handles test routes for messages
-    /// - Parameter message: generic `FKConnectionMessage`
-    private func handleMessages(message: FKConnectionMessage) {
-        if case let message as UInt16 = message {
-            XCTAssertEqual(message, UInt16(buffer))
-            connection.cancel()
-            exp.fulfill()
+    
+    func start() {
+        for _ in 0...29 {
+            sockets.append(FKConnection(host: "mark.weist.org", port: 7878))
         }
-        if case let message as Data = message {
-            XCTAssertEqual(message.count, Int(buffer))
-            connection.cancel()
-            exp.fulfill()
-        }
-        if case let message as String = message {
-            XCTAssertEqual(message, buffer)
-            connection.cancel()
-            exp.fulfill()
+        
+        for socket in sockets {
+            socketTask(connection: socket)
         }
     }
     
-    /// State update handler for connection
-    /// - Parameter connection: instance of 'NetworkConnection'
-    private func stateUpdateHandler(connection: FKConnection, test: TestCase) {
-        connection.stateUpdateHandler = { [weak self] state in
-            guard let self else { return }
-            switch state {
-            case .ready:
-                if test == .string { connection.send(message: buffer) }
-                if test == .data { connection.send(message: Data(count: Int(buffer)!)) }
-                if test == .ping { connection.send(message: UInt16(buffer)!) }
-            case .cancelled: exp.fulfill()
-            case .failed(let error):
-                guard let error else { return }
-                XCTFail("failed with error: \(error)") }
+    func socketTask(connection: FKConnection) -> Void {
+        Task {
+            Task { for try await message in connection.messages() { switch message { case .message(let message): break case .bytes(let bytes): counter += bytes.input ?? .zero } } }
+            print("Start")
+            try await connection.start()
+            await connection.send(message: "100000")
+            try await Task.sleep(for: .seconds(5.0))
+            print(counter)
         }
     }
 }
