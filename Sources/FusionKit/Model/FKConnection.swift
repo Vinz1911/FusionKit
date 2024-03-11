@@ -47,7 +47,7 @@ public final class FKConnection: @unchecked Sendable {
     /// Cancel the current connection
     public func cancel() -> Void {
         self.queue.async { [weak self] in guard let self else { return }
-            cleanup()
+            invalidate(); framer.reset(); connection.cancel()
         }
     }
     
@@ -79,7 +79,7 @@ private extension FKConnection {
     private func timeout() -> Void {
         timer = Timer.timeout(queue: queue) { [weak self] in
             guard let self else { return }
-            cleanup(); ready(FKConnectionError.connectionTimeout)
+            cancel(); ready(FKConnectionError.connectionTimeout)
         }
     }
     
@@ -95,7 +95,7 @@ private extension FKConnection {
         let message = framer.create(message: message)
         switch message {
         case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { transmission(with: data) } }
-        case .failure(let error): failed(error); cleanup() }
+        case .failure(let error): failed(error); cancel() }
     }
     
     /// Process message data and parse it into a conform message
@@ -106,13 +106,8 @@ private extension FKConnection {
             guard let self else { return }
             switch result {
             case .success(let message): transmitter(.message(message))
-            case .failure(let error): failed(error); cleanup() }
+            case .failure(let error): failed(error); cancel() }
         }
-    }
-    
-    /// Clean and cancel connection
-    private func cleanup() -> Void {
-        invalidate(); framer.reset(); connection.cancel()
     }
     
     /// Connection state update handler,
@@ -122,7 +117,7 @@ private extension FKConnection {
             guard let self else { return }
             switch state {
             case .cancelled: failed(nil)
-            case .failed(let error), .waiting(let error): cleanup(); failed(error)
+            case .failed(let error), .waiting(let error): cancel(); failed(error)
             case .ready: invalidate(); ready(nil)
             default: break }
         }
@@ -145,9 +140,9 @@ private extension FKConnection {
         connection.batch {
             connection.receiveDiscontiguous(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
                 guard let self else { return }
-                if let error { guard error != NWError.posix(.ECANCELED) else { return }; failed(error); cleanup(); return }
+                if let error { guard error != NWError.posix(.ECANCELED) else { return }; failed(error); cancel(); return }
                 if let data { processing(from: data) }
-                if isComplete { cleanup() } else { discontiguous() }
+                if isComplete { cancel() } else { discontiguous() }
             }
         }
     }
