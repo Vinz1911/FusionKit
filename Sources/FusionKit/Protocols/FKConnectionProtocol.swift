@@ -22,16 +22,16 @@ public protocol FKConnectionProtocol {
     init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
     
     /// Start a connection
-    func start() -> Void
+    func start() async throws -> Void
     
     /// Cancel the current connection
     func cancel() -> Void
     
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
-    func send<T: FKConnectionMessage>(message: T) -> Void
+    func send<T: FKConnectionMessage>(message: T) async -> Void
     
     /// Receive a message from a connected host
     /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    func receive(_ completion: @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void
+    func messages() -> AsyncThrowingStream<FKConnectionResult, Error>
 }

@@ -9,7 +9,7 @@
 import Foundation
 import Network
 
-public final class FKConnection: @unchecked Sendable {
+public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     private var ready: (Error?) -> Void = { _ in }
     private var failed: (Error?) -> Void = { _ in }
     private var transmitter: (FKConnectionResult) -> Void = { _ in }
