@@ -37,10 +37,9 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     /// Start a connection
     public func start() async throws -> Void {
         return try await withCheckedThrowingContinuation { [weak self] continuation in guard let self else { return }
-            queue.async { [weak self] in guard let self else { return }
-                ready = { if let error = $0 { continuation.resume(throwing: error) } else { continuation.resume() } }
-                timeout(); handler(); discontiguous()
-            }; connection.start(queue: queue)
+            ready = { if let error = $0 { continuation.resume(throwing: error) } else { continuation.resume() } }
+            timeout(); handler(); discontiguous()
+            connection.start(queue: queue)
         }
     }
     
@@ -63,10 +62,12 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     
     /// Receive a message from a connected host
     /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    public func messages() -> AsyncThrowingStream<FKConnectionResult, Error> {
+    public func receive() -> AsyncThrowingStream<FKConnectionResult, Error> {
         return AsyncThrowingStream { [weak self] continuation in guard let self else { return }
-            transmitter = { continuation.yield(with: .success($0)) }
-            failed = { if let error = $0 { continuation.finish(throwing: error) } }
+            self.queue.async { [weak self] in guard let self else { return }
+                transmitter = { continuation.yield(with: .success($0)) }
+                failed = { if let error = $0 { continuation.finish(throwing: error) } }
+            }
         }
     }
 }

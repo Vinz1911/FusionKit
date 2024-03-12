@@ -33,5 +33,5 @@ public protocol FKConnectionProtocol {
     
     /// Receive a message from a connected host
     /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    func messages() -> AsyncThrowingStream<FKConnectionResult, Error>
+    func receive() -> AsyncThrowingStream<FKConnectionResult, Error>
 }

@@ -9,14 +9,13 @@
 import XCTest
 @testable import FusionKit
 
-private enum TestCase {
-    case string
-    case data
-    case ping
+private enum FusionKitTypes {
+    case string; case data; case ping
 }
 
 class FusionKitTests: XCTestCase {
     private var connection = FKConnection(host: "measure.weist.org", port: 7878)
+    private let framer = FKConnectionFramer()
     private var buffer = "50000"
     private let timeout = 10.0
     private let uuid = UUID().uuidString
@@ -29,22 +28,22 @@ class FusionKitTests: XCTestCase {
     
     /// Start test sending single text message
     func testTextMessage() {
-        start(test: .string)
+        start(type: .string)
     }
     
     /// Start test sending single binary message
     func testBinaryMessage() {
-        start(test: .data)
+        start(type: .data)
     }
     
     /// Start test sending single ping message
     func testPingMessage() {
-        start(test: .ping)
+        start(type: .ping)
     }
     
     /// Start test sending and cancel
     func testCancel() {
-        start(test: .data, cancel: true)
+        start(type: nil, cancel: true)
     }
     
     /// Start test creating and parsing string based message
@@ -77,57 +76,52 @@ class FusionKitTests: XCTestCase {
 // MARK: - Private API Extension -
 
 private extension FusionKitTests {
-    private func start(test: TestCase, cancel: Bool = false) {
-        let multi = Mulitask()
+    /// Start test base on `FusionKitTypes`
+    /// - Parameters:
+    ///   - type: the `FusionKitTypes`
+    ///   - cancel: bool to cancel
+    private func start(type: FusionKitTypes?, cancel: Bool = false) {
         Task {
-            await multi.start()
+            Task { try await receive() }; try await connection.start()
+            if cancel { connection.cancel(); exp.fulfill(); return }
+            guard let type else { return }
+            switch type {
+            case .string: await connection.send(message: buffer)
+            case .data: await connection.send(message: Data(count: Int(buffer) ?? .zero))
+            case .ping: await connection.send(message: UInt16(buffer) ?? .zero) }
         }
         wait(for: [exp], timeout: timeout)
     }
     
-    /// Message framer
+    /// Receive Task
+    private func receive() async throws -> Void {
+        for try await result in connection.receive() {
+            if case .message(let message) = result {
+                if case let message as String = message { XCTAssertEqual(message, buffer); exp.fulfill() }
+                if case let message as Data = message { XCTAssertEqual(message.count, Int(buffer)); exp.fulfill() }
+                if case let message as UInt16 = message { XCTAssertEqual(message, UInt16(buffer)); exp.fulfill() }
+                connection.cancel()
+            }
+        }
+    }
+    
+    /// Message create
     private func framer<T: FKConnectionMessage>(message: T) {
-        let framer = FKConnectionFramer()
         let message = framer.create(message: message)
         switch message {
-        case .success(let data):
-            let dispatch = data.withUnsafeBytes { DispatchData(bytes: $0) }
-            framer.parse(data: dispatch) { result in
-                switch result {
-                case .success(let message):
-                    if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
-                    if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
-                case .failure(let error): XCTFail("failed with error: \(error)") }
-            }
+        case .success(let data): let dispatch = data.withUnsafeBytes { DispatchData(bytes: $0) }; parser(data: dispatch)
         case .failure(let error): XCTFail("failed with error: \(error)") }
         wait(for: [exp], timeout: timeout)
     }
-}
-
-
-internal actor Mulitask {
-    private var sockets: [FKConnection] = []
-    private var counter: Int = .zero
     
-    
-    func start() {
-        for _ in 0...29 {
-            sockets.append(FKConnection(host: "mark.weist.org", port: 7878))
-        }
-        
-        for socket in sockets {
-            socketTask(connection: socket)
-        }
-    }
-    
-    func socketTask(connection: FKConnection) -> Void {
-        Task {
-            Task { for try await message in connection.messages() { switch message { case .message(let message): break case .bytes(let bytes): counter += bytes.input ?? .zero } } }
-            print("Start")
-            try await connection.start()
-            await connection.send(message: "100000")
-            try await Task.sleep(for: .seconds(5.0))
-            print(counter)
+    /// Message parse
+    private func parser(data: DispatchData) {
+        framer.parse(data: data) { result in
+            if case .success(let message) = result {
+                if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
+                if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
+            }
+            if case .failure(let error) = result { XCTFail("failed with error: \(error)") }
         }
     }
 }
