@@ -117,11 +117,11 @@ private extension FusionKitTests {
     /// Message parse
     private func parser(data: DispatchData) {
         framer.parse(data: data) { result in
+            if case .failure(let error) = result { XCTFail("failed with error: \(error)") }
             if case .success(let message) = result {
                 if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
                 if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
             }
-            if case .failure(let error) = result { XCTFail("failed with error: \(error)") }
         }
     }
 }

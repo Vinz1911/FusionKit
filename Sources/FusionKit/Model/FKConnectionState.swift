@@ -16,7 +16,7 @@ public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
 
 /// The `FKConnectionResult` message result
 @frozen
-public enum FKConnectionResult {
+public enum FKConnectionResult: Sendable {
     case message(FKConnectionMessage)
     case bytes(FKConnectionBytes)
 }
