@@ -15,11 +15,11 @@ public protocol FKConnectionProtocol {
     /// allows to transmit data as fast as possible and allows to measure a Networks's performance.
     ///
     /// - Parameters:
-    ///   - host: the host name
-    ///   - port: the host port
-    ///   - parameters: network parameters
-    ///   - queue: dispatch queue
-    init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
+    ///   - host: the host name as `String`
+    ///   - port: the network port as `UInt16`
+    ///   - parameters: network frameworks `NWParameters`
+    ///   - qos: quality of service as `DispatchQoS`
+    init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
     
     /// Start a connection
     func start() async throws -> Void
