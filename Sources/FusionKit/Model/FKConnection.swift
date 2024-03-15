@@ -118,7 +118,7 @@ private extension FKConnection {
             guard let self else { return }
             switch state {
             case .cancelled: failed(nil)
-            case .failed(let error), .waiting(let error): cancel(); failed(error)
+            case .failed(let error), .waiting(let error): cancel(); failed(error); ready(error)
             case .ready: invalidate(); ready(nil)
             default: break }
         }
