@@ -11,7 +11,7 @@ import Network
 import os
 
 public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
-    public private(set) var state: FKConnectionState = .closed
+    public private(set) var state: FKConnectionState = .suspended
     private var intercom: (FKConnectionIntercom) -> Void = { _ in }
     private var timer: DispatchSourceTimer?
     private let queue: DispatchQueue
@@ -57,12 +57,13 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
         return AsyncThrowingStream { [weak self] continuation in guard let self else { return }
             self.queue.async { [weak self] in guard let self else { return }
                 intercom = { [weak self] result in guard let self else { return }
-                    //lock.withLock { [weak self] in guard let self else { return }
+                    lock.withLock { [weak self] in guard let self else { return }
                         switch result {
-                        case .ready: state = .ready
-                        case .failed(let error): state = .closed; continuation.finish(throwing: error)
+                        case .ready: state = .running
+                        case .cancelled: state = .canceling
+                        case .failed(let error): state = .completed; continuation.finish(throwing: error)
                         case .result(let result): continuation.yield(with: .success(result)) }
-                    //}
+                    }
                 }
                 timeout(); handler(); discontiguous(); connection.start(queue: queue)
             }
@@ -115,7 +116,7 @@ private extension FKConnection {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
             switch state {
-            case .cancelled: intercom(.failed(nil))
+            case .cancelled: intercom(.cancelled)
             case .failed(let error), .waiting(let error): intercom(.failed(error)); cancel()
             case .ready: invalidate(); intercom(.ready)
             default: break }

@@ -16,9 +16,11 @@ public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
 
 /// The `FKConnectionState`
 @frozen
-public enum FKConnectionState {
-    case ready
-    case closed
+public enum FKConnectionState: Sendable {
+    case running
+    case suspended
+    case canceling
+    case completed
 }
 
 /// The `FKConnectionResult` message result
@@ -32,6 +34,7 @@ public enum FKConnectionResult: Sendable {
 @frozen
 internal enum FKConnectionIntercom: Sendable {
     case ready
+    case cancelled
     case failed(Error?)
     case result(FKConnectionResult)
 }
