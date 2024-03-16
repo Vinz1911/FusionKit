@@ -14,7 +14,7 @@ private enum FusionKitTypes {
 }
 
 class FusionKitTests: XCTestCase {
-    private var connection = FKConnection(host: "localhost", port: 7878)
+    private var connection = FKConnection(host: "mark.weist.org", port: 7878)
     private let framer = FKConnectionFramer()
     private var buffer = "50000"
     private let timeout = 10.0
@@ -83,8 +83,8 @@ private extension FusionKitTests {
     private func start(type: FusionKitTypes?, cancel: Bool = false) {
         Task {
             Task { do { try await receive() } catch { print("[Fusion]: \(error)") } }
-            do { try await connection.start() } catch { print("[Fusion]: \(error)") }
             if cancel { connection.cancel(); exp.fulfill(); return }
+            while connection.state != .ready { if connection.state == .ready { break } }
             guard let type else { return }
             switch type {
             case .string: await connection.send(message: buffer)

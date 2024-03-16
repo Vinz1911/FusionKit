@@ -21,9 +21,6 @@ public protocol FKConnectionProtocol {
     ///   - qos: quality of service as `DispatchQoS`
     init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
     
-    /// Start a connection
-    func start() async throws -> Void
-    
     /// Cancel the current connection
     func cancel() -> Void
     

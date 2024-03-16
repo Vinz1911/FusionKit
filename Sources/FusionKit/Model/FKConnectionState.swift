@@ -14,9 +14,24 @@ public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
     public var output: Int?
 }
 
+/// The `FKConnectionState`
+@frozen
+public enum FKConnectionState {
+    case ready
+    case closed
+}
+
 /// The `FKConnectionResult` message result
 @frozen
 public enum FKConnectionResult: Sendable {
     case message(FKConnectionMessage)
     case bytes(FKConnectionBytes)
+}
+
+/// The `FKConnectionIntercom` internal result transmission
+@frozen
+internal enum FKConnectionIntercom: Sendable {
+    case ready
+    case failed(Error?)
+    case result(FKConnectionResult)
 }

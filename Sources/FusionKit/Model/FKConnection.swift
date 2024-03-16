@@ -8,16 +8,16 @@
 
 import Foundation
 import Network
+import os
 
 public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
-    private var ready: (Error?) -> Void = { _ in }
-    private var failed: (Error?) -> Void = { _ in }
-    private var transmitter: (FKConnectionResult) -> Void = { _ in }
-    
+    private(set) var state: FKConnectionState = .closed
+    private var intercom: (FKConnectionIntercom) -> Void = { _ in }
     private var timer: DispatchSourceTimer?
     private let queue: DispatchQueue
     private let framer = FKConnectionFramer()
     private let connection: NWConnection
+    private let lock = OSAllocatedUnfairLock()
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
@@ -32,15 +32,6 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
         if host.isEmpty { fatalError(FKConnectionError.missingHost.description) }; if port == .zero { fatalError(FKConnectionError.missingPort.description) }
         self.connection = .init(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
         self.queue = .init(label: UUID().uuidString, qos: qos)
-    }
-    
-    /// Start a connection
-    public func start() async throws -> Void {
-        return try await withCheckedThrowingContinuation { [weak self] continuation in guard let self else { return }
-            ready = { if let error = $0 { continuation.resume(throwing: error) } else { continuation.resume() } }
-            timeout(); handler(); discontiguous()
-            connection.start(queue: queue)
-        }
     }
     
     /// Cancel the current connection
@@ -65,8 +56,15 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     public func receive() -> AsyncThrowingStream<FKConnectionResult, Error> {
         return AsyncThrowingStream { [weak self] continuation in guard let self else { return }
             self.queue.async { [weak self] in guard let self else { return }
-                transmitter = { continuation.yield(with: .success($0)) }
-                failed = { if let error = $0 { continuation.finish(throwing: error) } }
+                intercom = { [weak self] result in guard let self else { return }
+                    lock.withLock { [weak self] in guard let self else { return }
+                        switch result {
+                        case .ready: state = .ready
+                        case .failed(let error): state = .closed; continuation.finish(throwing: error)
+                        case .result(let result): continuation.yield(with: .success(result)) }
+                    }
+                }
+                timeout(); handler(); discontiguous(); connection.start(queue: queue)
             }
         }
     }
@@ -80,7 +78,7 @@ private extension FKConnection {
     private func timeout() -> Void {
         timer = Timer.timeout(queue: queue) { [weak self] in
             guard let self else { return }
-            cancel(); ready(FKConnectionError.connectionTimeout)
+            cancel(); intercom(.failed(FKConnectionError.connectionTimeout))
         }
     }
     
@@ -96,18 +94,18 @@ private extension FKConnection {
         let message = framer.create(message: message)
         switch message {
         case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { transmission(with: data) } }
-        case .failure(let error): failed(error); cancel() }
+        case .failure(let error): intercom(.failed(error)); cancel() }
     }
     
     /// Process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processing(from data: DispatchData) -> Void {
-        transmitter(.bytes(.init(input: data.count)))
+        intercom(.result(.bytes(.init(input: data.count))))
         framer.parse(data: data) { [weak self] result in
             guard let self else { return }
             switch result {
-            case .success(let message): transmitter(.message(message))
-            case .failure(let error): failed(error); cancel() }
+            case .success(let message): intercom(.result(.message(message)))
+            case .failure(let error): intercom(.failed(error)); cancel() }
         }
     }
     
@@ -117,9 +115,9 @@ private extension FKConnection {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
             switch state {
-            case .cancelled: failed(nil)
-            case .failed(let error), .waiting(let error): cancel(); failed(error); ready(error)
-            case .ready: invalidate(); ready(nil)
+            case .cancelled: intercom(.failed(nil))
+            case .failed(let error), .waiting(let error): cancel(); intercom(.failed(error))
+            case .ready: invalidate(); intercom(.ready)
             default: break }
         }
     }
@@ -130,8 +128,8 @@ private extension FKConnection {
         connection.batch {
             connection.send(content: data, completion: .contentProcessed { [weak self] error in
                 guard let self else { return }
-                transmitter(.bytes(FKConnectionBytes(output: data.count)))
-                guard let error, error != NWError.posix(.ECANCELED) else { return }; failed(error)
+                intercom(.result(.bytes(FKConnectionBytes(output: data.count))))
+                guard let error, error != NWError.posix(.ECANCELED) else { return }; intercom(.failed(error))
             })
         }
     }
@@ -141,7 +139,7 @@ private extension FKConnection {
         connection.batch {
             connection.receiveDiscontiguous(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
                 guard let self else { return }
-                if let error { guard error != NWError.posix(.ECANCELED) else { return }; failed(error); cancel(); return }
+                if let error { guard error != NWError.posix(.ECANCELED) else { return }; intercom(.failed(error)); cancel(); return }
                 if let data { processing(from: data) }
                 if isComplete { cancel() } else { discontiguous() }
             }
