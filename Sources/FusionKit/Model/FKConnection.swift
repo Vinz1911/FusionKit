@@ -57,12 +57,12 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
         return AsyncThrowingStream { [weak self] continuation in guard let self else { return }
             self.queue.async { [weak self] in guard let self else { return }
                 intercom = { [weak self] result in guard let self else { return }
-                    lock.withLock { [weak self] in guard let self else { return }
+                    //lock.withLock { [weak self] in guard let self else { return }
                         switch result {
                         case .ready: state = .ready
                         case .failed(let error): state = .closed; continuation.finish(throwing: error)
                         case .result(let result): continuation.yield(with: .success(result)) }
-                    }
+                    //}
                 }
                 timeout(); handler(); discontiguous(); connection.start(queue: queue)
             }
