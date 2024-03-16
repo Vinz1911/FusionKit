@@ -84,7 +84,7 @@ private extension FusionKitTests {
         Task {
             Task { do { try await receive() } catch { print("[Fusion]: \(error)") } }
             if cancel { connection.cancel(); exp.fulfill(); return }
-            while connection.state != .ready { if connection.state == .ready { break } }
+            while connection.state != .running { if connection.state == .running { break } }
             guard let type else { return }
             switch type {
             case .string: await connection.send(message: buffer)
