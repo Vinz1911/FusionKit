@@ -11,7 +11,7 @@ import Network
 import os
 
 public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
-    private(set) var state: FKConnectionState = .closed
+    public private(set) var state: FKConnectionState = .closed
     private var intercom: (FKConnectionIntercom) -> Void = { _ in }
     private var timer: DispatchSourceTimer?
     private let queue: DispatchQueue
