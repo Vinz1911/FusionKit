@@ -11,7 +11,7 @@ import Network
 
 public protocol FKConnectionProtocol: Sendable {
     /// The `FKConnectionState` update values
-    var stateUpdateHandler: (FKConnectionState) -> Void { get set }
+    var stateUpdateHandler: (@Sendable (FKConnectionState) -> Void) { get set }
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol

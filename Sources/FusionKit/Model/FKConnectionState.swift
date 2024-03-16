@@ -9,9 +9,9 @@
 import Foundation
 
 /// The `FKConnectionBytes` for input and output bytes
-public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
-    public var input: Int?
-    public var output: Int?
+public struct FKConnectionBytes: Sendable {
+    public internal(set) var input: Int?
+    public internal(set) var output: Int?
 }
 
 // MARK: - State Types -
@@ -26,7 +26,7 @@ public enum FKConnectionState: Sendable {
 
 /// The `FKTransmitter` internal message transmitter
 @frozen
-internal enum FKTransmitter {
+internal enum FKTransmitter: Sendable {
     case message(FKConnectionMessage)
     case bytes(FKConnectionBytes)
 }

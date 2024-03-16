@@ -10,14 +10,13 @@ import Foundation
 import Network
 
 public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
-    public var stateUpdateHandler: (FKConnectionState) -> Void = { _ in }
+    public var stateUpdateHandler: (@Sendable (FKConnectionState) -> Void) = { _ in }
     
-    private var transmitter: (FKTransmitter) -> Void = { _ in }
+    private var transmitter: (@Sendable (FKTransmitter) -> Void) = { _ in }
     private var timer: DispatchSourceTimer?
     private let queue: DispatchQueue
     private let framer = FKConnectionFramer()
     private let connection: NWConnection
-    private var active: Bool = false
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
@@ -37,25 +36,22 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     /// Start a connection
     public func start() -> Void {
         queue.async { [weak self] in guard let self else { return }
-            guard !active else { return }
-            timeout(); handler(); receive(); active = true
-        }; connection.start(queue: queue)
+            timeout(); handler(); discontiguous(); connection.start(queue: queue)
+        }
     }
     
     /// Cancel the current connection
     public func cancel() -> Void {
-        cleanup()
+        self.queue.async { [weak self] in guard let self else { return }
+            cleanup()
+        }
     }
     
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
     public func send<T: FKConnectionMessage>(message: T) -> Void {
-        self.queue.async { [weak self] in
-            guard let self else { return }
-            let message = framer.create(message: message)
-            switch message {
-            case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { processing(with: data) } }
-            case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
+        self.queue.async { [weak self] in guard let self else { return }
+            processing(with: message)
         }
     }
     
@@ -90,15 +86,11 @@ private extension FKConnection {
     
     /// Process message data and send it to a host
     /// - Parameter data: message data
-    private func processing(with data: Data) -> Void {
-        connection.batch {
-            connection.send(content: data, completion: .contentProcessed { [weak self] error in
-                guard let self else { return }
-                transmitter(.bytes(FKConnectionBytes(output: data.count)))
-                guard let error, error != NWError.posix(.ECANCELED) else { return }
-                stateUpdateHandler(.failed(error))
-            })
-        }
+    private func processing<T: FKConnectionMessage>(with message: T) -> Void {
+        let message = framer.create(message: message)
+        switch message {
+        case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { transmission(data)} }
+        case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
     }
     
     /// Process message data and parse it into a conform message
@@ -115,10 +107,7 @@ private extension FKConnection {
     
     /// Clean and cancel connection
     private func cleanup() -> Void {
-        self.queue.async { [weak self] in
-            guard let self else { return }
-            invalidate(); framer.reset(); active = false
-        }; connection.cancel()
+        invalidate(); framer.reset(); connection.cancel()
     }
     
     /// Connection state update handler,
@@ -134,14 +123,26 @@ private extension FKConnection {
         }
     }
     
-    /// Receives tcp data and parse it into a message frame
-    private func receive() -> Void {
+    /// Transmit tcp data from a message frame
+    /// - Parameter content: the content `Data` to transmit
+    private func transmission(_ content: Data) -> Void {
         connection.batch {
-            connection.receiveDiscontiguous(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] data, _, isComplete, error in
+            connection.send(content: content, completion: .contentProcessed { [weak self] error in
+                guard let self else { return }
+                transmitter(.bytes(FKConnectionBytes(output: content.count)))
+                if let error, error != NWError.posix(.ECANCELED) { stateUpdateHandler(.failed(error)) }
+            })
+        }
+    }
+    
+    /// Receives tcp data and parse it into a message frame
+    private func discontiguous() -> Void {
+        connection.batch {
+            connection.receiveDiscontiguous(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] content, _, isComplete, error in
                 guard let self else { return }
                 if let error { guard error != NWError.posix(.ECANCELED) else { return }; stateUpdateHandler(.failed(error)); cleanup(); return }
-                if let data { processing(from: data) }
-                if isComplete { cleanup() } else { receive() }
+                if let content { processing(from: content) }
+                if isComplete { cleanup() } else { discontiguous() }
             }
         }
     }
