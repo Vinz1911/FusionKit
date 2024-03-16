@@ -116,7 +116,7 @@ private extension FKConnection {
             guard let self else { return }
             switch state {
             case .cancelled: intercom(.failed(nil))
-            case .failed(let error), .waiting(let error): cancel(); intercom(.failed(error))
+            case .failed(let error), .waiting(let error): intercom(.failed(error)); cancel()
             case .ready: invalidate(); intercom(.ready)
             default: break }
         }
