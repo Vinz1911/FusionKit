@@ -36,5 +36,5 @@ public protocol FKConnectionProtocol: Sendable {
     
     /// Receive a message from a connected host
     /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    func receive(_ completion: @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void
+    func receive(_ completion: @Sendable @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void
 }

@@ -57,7 +57,7 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     
     /// Receive a message from a connected host
     /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    public func receive(_ completion: @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void {
+    public func receive(_ completion: @Sendable @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void {
         transmitter = { result in
             switch result {
             case .message(let message): completion(message, nil)
