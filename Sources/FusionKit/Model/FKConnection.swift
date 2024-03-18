@@ -10,12 +10,11 @@ import Foundation
 import Network
 
 public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
-    public var stateUpdateHandler: (@Sendable (FKConnectionState) -> Void) = { _ in }
-    
-    private var transmitter: (@Sendable (FKTransmitter) -> Void) = { _ in }
+    public var stateUpdateHandler: (@Sendable (FKState) -> Void) = { _ in }
+    private var result: (@Sendable (FKResult) -> Void) = { _ in }
     private var timer: DispatchSourceTimer?
     private let queue: DispatchQueue
-    private let framer = FKConnectionFramer()
+    private let framer = FKFramer()
     private let connection: NWConnection
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
@@ -28,7 +27,7 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     ///   - parameters: network parameters
     ///   - queue: dispatch queue
     public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString, qos: .userInteractive)) {
-        if host.isEmpty { fatalError(FKConnectionError.missingHost.description) }; if port == .zero { fatalError(FKConnectionError.missingPort.description) }
+        if host.isEmpty { fatalError(FKError.missingHost.description) }; if port == .zero { fatalError(FKError.missingPort.description) }
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
         self.queue = queue
     }
@@ -49,20 +48,16 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
-    public func send<T: FKConnectionMessage>(message: T) -> Void {
+    public func send<T: FKMessage>(message: T) -> Void {
         self.queue.async { [weak self] in guard let self else { return }
             processing(with: message)
         }
     }
     
     /// Receive a message from a connected host
-    /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    public func receive(_ completion: @Sendable @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void {
-        transmitter = { result in
-            switch result {
-            case .message(let message): completion(message, nil)
-            case .bytes(let bytes): completion(nil, bytes) }
-        }
+    /// - Parameter completion: contains `FKMessage` and `FKBytes` generic message typ
+    public func receive(_ completion: @Sendable @escaping (FKMessage?, FKBytes?) -> Void) -> Void {
+        result = { if case .message(let message) = $0 { completion(message, nil) }; if case .bytes(let bytes) = $0 { completion(nil, bytes) } }
     }
 }
 
@@ -74,7 +69,7 @@ private extension FKConnection {
     private func timeout() -> Void {
         timer = Timer.timeout(queue: queue) { [weak self] in
             guard let self else { return }
-            cleanup(); stateUpdateHandler(.failed(FKConnectionError.connectionTimeout))
+            cleanup(); stateUpdateHandler(.failed(FKError.connectionTimeout))
         }
     }
     
@@ -86,7 +81,7 @@ private extension FKConnection {
     
     /// Process message data and send it to a host
     /// - Parameter data: message data
-    private func processing<T: FKConnectionMessage>(with message: T) -> Void {
+    private func processing<T: FKMessage>(with message: T) -> Void {
         let message = framer.create(message: message)
         switch message {
         case .success(let data): let queued = data.chunks; if !queued.isEmpty { for data in queued { transmission(data)} }
@@ -96,11 +91,11 @@ private extension FKConnection {
     /// Process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processing(from data: DispatchData) -> Void {
-        transmitter(.bytes(.init(input: data.count)))
+        result(.bytes(.init(input: data.count)))
         framer.parse(data: data) { [weak self] result in
             guard let self else { return }
             switch result {
-            case .success(let message): transmitter(.message(message))
+            case .success(let message): self.result(.message(message))
             case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
         }
     }
@@ -129,7 +124,7 @@ private extension FKConnection {
         connection.batch {
             connection.send(content: content, completion: .contentProcessed { [weak self] error in
                 guard let self else { return }
-                transmitter(.bytes(FKConnectionBytes(output: content.count)))
+                result(.bytes(FKBytes(output: content.count)))
                 if let error, error != NWError.posix(.ECANCELED) { stateUpdateHandler(.failed(error)) }
             })
         }

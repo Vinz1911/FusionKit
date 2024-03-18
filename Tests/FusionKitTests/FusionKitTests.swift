@@ -61,13 +61,13 @@ class FusionKitTests: XCTestCase {
     
     /// Start test error description mapping
     func testErrorDescription() {
-        XCTAssertEqual(FKConnectionError.missingHost.description, "missing host")
-        XCTAssertEqual(FKConnectionError.missingPort.description, "missing port")
-        XCTAssertEqual(FKConnectionError.connectionTimeout.description, "connection timeout")
-        XCTAssertEqual(FKConnectionError.parsingFailed.description, "message parsing failed")
-        XCTAssertEqual(FKConnectionError.readBufferOverflow.description, "read buffer overflow")
-        XCTAssertEqual(FKConnectionError.writeBufferOverflow.description, "write buffer overflow")
-        XCTAssertEqual(FKConnectionError.unexpectedOpcode.description, "unexpected opcode")
+        XCTAssertEqual(FKError.missingHost.description, "missing host")
+        XCTAssertEqual(FKError.missingPort.description, "missing port")
+        XCTAssertEqual(FKError.connectionTimeout.description, "connection timeout")
+        XCTAssertEqual(FKError.parsingFailed.description, "message parsing failed")
+        XCTAssertEqual(FKError.readBufferOverflow.description, "read buffer overflow")
+        XCTAssertEqual(FKError.writeBufferOverflow.description, "write buffer overflow")
+        XCTAssertEqual(FKError.unexpectedOpcode.description, "unexpected opcode")
         
         exp.fulfill()
         wait(for: [exp], timeout: timeout)
@@ -91,8 +91,8 @@ private extension FusionKitTests {
     }
     
     /// Message framer
-    private func framer<T: FKConnectionMessage>(message: T) {
-        let framer = FKConnectionFramer()
+    private func framer<T: FKMessage>(message: T) {
+        let framer = FKFramer()
         let message = framer.create(message: message)
         switch message {
         case .success(let data):
@@ -109,8 +109,8 @@ private extension FusionKitTests {
     }
     
     /// Handles test routes for messages
-    /// - Parameter message: generic `FKConnectionMessage`
-    private func handleMessages(message: FKConnectionMessage) {
+    /// - Parameter message: generic `FKMessage`
+    private func handleMessages(message: FKMessage) {
         if case let message as UInt16 = message {
             XCTAssertEqual(message, UInt16(buffer))
             connection.cancel()

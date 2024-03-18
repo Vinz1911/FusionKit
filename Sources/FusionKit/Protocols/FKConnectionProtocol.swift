@@ -11,7 +11,7 @@ import Network
 
 public protocol FKConnectionProtocol: Sendable {
     /// The `FKConnectionState` update values
-    var stateUpdateHandler: (@Sendable (FKConnectionState) -> Void) { get set }
+    var stateUpdateHandler: (@Sendable (FKState) -> Void) { get set }
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
@@ -32,9 +32,9 @@ public protocol FKConnectionProtocol: Sendable {
     
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
-    func send<T: FKConnectionMessage>(message: T) -> Void
+    func send<T: FKMessage>(message: T) -> Void
     
     /// Receive a message from a connected host
-    /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    func receive(_ completion: @Sendable @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void
+    /// - Parameter completion: contains `FKMessage` and `FKBytes` generic message typ
+    func receive(_ completion: @Sendable @escaping (FKMessage?, FKBytes?) -> Void) -> Void
 }

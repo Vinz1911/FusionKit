@@ -1,5 +1,5 @@
 //
-//  FKConnectionFramerProtocol.swift
+//  FKFramerProtocol.swift
 //  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
@@ -8,8 +8,8 @@
 
 import Foundation
 
-internal protocol FKConnectionFramerProtocol {
-    /// The `FKConnectionFramer` represents the fusion framing protocol.
+internal protocol FKFramerProtocol {
+    /// The `FKFramer` represents the fusion framing protocol.
     /// This is a very fast and lightweight message framing protocol that supports `String` and `Data` based messages.
     /// It also supports `UInt16` for ping based transfer responses.
     /// The protocol's overhead per message is only `0x5` bytes, resulting in high performance.
@@ -21,12 +21,12 @@ internal protocol FKConnectionFramerProtocol {
     ///
     /// - Parameter message: generic type which conforms to 'Data' and 'String'
     /// - Returns: generic Result type returning data and possible error
-    func create<T: FKConnectionMessage>(message: T) -> Result<Data, Error>
+    func create<T: FKMessage>(message: T) -> Result<Data, Error>
     
     /// Parse a protocol conform message frame
     ///
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns generic Result type with parsed message and possible error
-    func parse(data: DispatchData, _ completion: (Result<FKConnectionMessage, Error>) -> Void) -> Void
+    func parse(data: DispatchData, _ completion: (Result<FKMessage, Error>) -> Void) -> Void
 }
