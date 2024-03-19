@@ -38,8 +38,9 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     /// Cancel the current connection
     public func cancel() -> Void {
         queue.async { [weak self] in guard let self else { return }
-            invalidate(); framer.reset(); connection.cancel()
+            invalidate(); framer.reset()
         }
+        connection.cancel()
     }
     
     /// Send messages to a connected host
