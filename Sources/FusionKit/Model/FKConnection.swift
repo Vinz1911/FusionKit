@@ -65,8 +65,9 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
                     case .failed(let error): interstate.mutate { $0 = .completed }; continuation.finish(throwing: error)
                     case .result(let result): continuation.yield(with: .success(result)) }
                 }
-                timeout(); handler(); discontiguous(); connection.start(queue: queue)
+                timeout(); handler(); discontiguous()
             }
+            connection.start(queue: queue)
         }
     }
 }
