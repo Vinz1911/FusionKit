@@ -60,7 +60,7 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
                 intercom = { [weak self] result in guard let self else { return }
                     switch result {
                     case .ready: interstate.mutate { $0 = .running }
-                    case .cancelled: interstate.mutate { $0 = .canceling }
+                    case .cancelled: interstate.mutate { $0 = .completed }
                     case .failed(let error): interstate.mutate { $0 = .completed }; continuation.finish(throwing: error)
                     case .result(let result): continuation.yield(with: .success(result)) }
                 }

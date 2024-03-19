@@ -19,7 +19,6 @@ public struct FKConnectionBytes: FKConnectionBytesProtocol, Sendable {
 public enum FKConnectionState: Sendable {
     case running
     case suspended
-    case canceling
     case completed
 }
 
