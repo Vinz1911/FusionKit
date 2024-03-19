@@ -11,13 +11,14 @@ import Network
 import os
 
 public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
-    public private(set) var state: FKConnectionState = .suspended
+    public var state: FKConnectionState { interstate.value }
+    
     private var intercom: (FKConnectionIntercom) -> Void = { _ in }
+    private var interstate = Atomic<FKConnectionState>(.suspended)
     private var timer: DispatchSourceTimer?
     private let queue: DispatchQueue
     private let framer = FKConnectionFramer()
     private let connection: NWConnection
-    private let lock = OSAllocatedUnfairLock()
     
     /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
     /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
@@ -36,7 +37,7 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     
     /// Cancel the current connection
     public func cancel() -> Void {
-        self.queue.async { [weak self] in guard let self else { return }
+        queue.async { [weak self] in guard let self else { return }
             invalidate(); framer.reset(); connection.cancel()
         }
     }
@@ -45,8 +46,8 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
     public func send<T: FKConnectionMessage>(message: T) async -> Void {
         return await withCheckedContinuation { [weak self] continuation in guard let self else { return }
-            self.queue.async { [weak self] in guard let self else { return }
-                self.processing(with: message); continuation.resume()
+            queue.async { [weak self] in guard let self else { return }
+                processing(with: message); continuation.resume()
             }
         }
     }
@@ -55,13 +56,13 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
     public func receive() -> AsyncThrowingStream<FKConnectionResult, Error> {
         return AsyncThrowingStream { [weak self] continuation in guard let self else { return }
-            self.queue.async { [weak self] in guard let self else { return }
+            queue.async { [weak self] in guard let self else { return }
                 intercom = { [weak self] result in guard let self else { return }
-                    lock.withLock { [weak self] in guard let self else { return }
+                    queue.async { [weak self] in guard let self else { return }
                         switch result {
-                        case .ready: state = .running
-                        case .cancelled: state = .canceling
-                        case .failed(let error): state = .completed; continuation.finish(throwing: error)
+                        case .ready: interstate.mutate { $0 = .running }
+                        case .cancelled: interstate.mutate { $0 = .canceling }
+                        case .failed(let error): interstate.mutate { $0 = .completed }; continuation.finish(throwing: error)
                         case .result(let result): continuation.yield(with: .success(result)) }
                     }
                 }

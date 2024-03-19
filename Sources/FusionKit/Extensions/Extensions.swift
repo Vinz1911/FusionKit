@@ -27,6 +27,16 @@ internal extension Timer {
     }
 }
 
+// MARK: - Atomic -
+
+internal final class Atomic<Value>: @unchecked Sendable {
+    private var lock = NSLock()
+    private var storage: Value
+    internal init(_ value: Value) { storage = value }
+    internal var value: Value { get { lock.lock(); let value = storage; lock.unlock(); return value } }
+    internal func mutate(_ transform: (inout Value) -> Void) -> Void { lock.lock(); transform(&storage); lock.unlock() }
+}
+
 // MARK: - Type Extensions -
 
 internal extension UInt32 {
