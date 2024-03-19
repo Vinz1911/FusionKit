@@ -58,13 +58,11 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
         return AsyncThrowingStream { [weak self] continuation in guard let self else { return }
             queue.async { [weak self] in guard let self else { return }
                 intercom = { [weak self] result in guard let self else { return }
-                    queue.async { [weak self] in guard let self else { return }
-                        switch result {
-                        case .ready: interstate.mutate { $0 = .running }
-                        case .cancelled: interstate.mutate { $0 = .canceling }
-                        case .failed(let error): interstate.mutate { $0 = .completed }; continuation.finish(throwing: error)
-                        case .result(let result): continuation.yield(with: .success(result)) }
-                    }
+                    switch result {
+                    case .ready: interstate.mutate { $0 = .running }
+                    case .cancelled: interstate.mutate { $0 = .canceling }
+                    case .failed(let error): interstate.mutate { $0 = .completed }; continuation.finish(throwing: error)
+                    case .result(let result): continuation.yield(with: .success(result)) }
                 }
                 timeout(); handler(); discontiguous(); connection.start(queue: queue)
             }
