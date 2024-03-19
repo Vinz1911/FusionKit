@@ -38,9 +38,8 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     /// Cancel the current connection
     public func cancel() -> Void {
         queue.async { [weak self] in guard let self else { return }
-            invalidate(); framer.reset()
+            invalidate(); framer.reset(); connection.cancel()
         }
-        connection.cancel()
     }
     
     /// Send messages to a connected host
@@ -65,9 +64,8 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
                     case .failed(let error): interstate.mutate { $0 = .completed }; continuation.finish(throwing: error)
                     case .result(let result): continuation.yield(with: .success(result)) }
                 }
-                timeout(); handler(); discontiguous()
+                timeout(); handler(); discontiguous(); connection.start(queue: queue)
             }
-            connection.start(queue: queue)
         }
     }
 }
