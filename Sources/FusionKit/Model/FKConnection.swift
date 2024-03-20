@@ -102,7 +102,7 @@ private extension FKConnection {
     
     /// Clean and cancel connection
     private func cleanup() -> Void {
-        invalidate(); framer.reset(); connection.cancel()
+        connection.cancel(); invalidate(); framer.reset()
     }
     
     /// Connection state update handler,
