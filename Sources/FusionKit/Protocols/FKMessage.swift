@@ -7,7 +7,6 @@
 //
 
 import Foundation
-import StoreKit
 
 /// Protocol for message compliance
 public protocol FKMessage: Sendable {

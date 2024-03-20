@@ -9,7 +9,7 @@
 import Foundation
 
 internal final class FKFramer: FKFramerProtocol, @unchecked Sendable {
-    private var buffer: DispatchData
+    private var buffer: DispatchData = .empty
     internal func reset() { buffer = .empty }
     
     /// The `FKFramer` represents the fusion framing protocol.
@@ -18,10 +18,6 @@ internal final class FKFramer: FKFramerProtocol, @unchecked Sendable {
     /// The protocol's overhead per message is only `0x5` bytes, resulting in high performance.
     ///
     /// This protocol is based on a standardized Type-Length-Value Design Scheme.
-    
-    internal required init(buffer: DispatchData = .empty) {
-        self.buffer = buffer
-    }
     
     /// Create a protocol conform message frame
     ///

@@ -15,7 +15,6 @@ internal protocol FKFramerProtocol {
     /// The protocol's overhead per message is only `0x5` bytes, resulting in high performance.
     ///
     /// This protocol is based on a standardized Type-Length-Value Design Scheme.
-    init(buffer: DispatchData)
     
     /// Create a protocol conform message frame
     ///
