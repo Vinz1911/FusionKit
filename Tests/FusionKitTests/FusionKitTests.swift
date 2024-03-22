@@ -97,12 +97,14 @@ private extension FusionKitTests {
         switch message {
         case .success(let data):
             let dispatch = data.withUnsafeBytes { DispatchData(bytes: $0) }
-            guard let result = framer.parse(data: dispatch) else { return }
-            switch result {
-            case .success(let message):
-                if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
-                if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
-            case .failure(let error): XCTFail("failed with error: \(error)") }
+            framer.parse(data: dispatch) { result in
+                switch result {
+                case .success(let message):
+                    if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
+                    if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
+                case .failure(let error): XCTFail("failed with error: \(error)") }
+            }
+            
         case .failure(let error): XCTFail("failed with error: \(error)") }
         wait(for: [exp], timeout: timeout)
     }

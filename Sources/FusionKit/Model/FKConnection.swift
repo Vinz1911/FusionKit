@@ -91,10 +91,12 @@ private extension FKConnection {
     /// Process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processing(from data: DispatchData) -> Void {
-        guard let message = framer.parse(data: data) else { return }
-        switch message {
-        case .success(let message): self.result(.message(message))
-        case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
+        framer.parse(data: data) { [weak self] result in
+            guard let self else { return }
+            switch result {
+            case .success(let message): self.result(.message(message))
+            case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
+        }
     }
     
     /// Clean and cancel connection
