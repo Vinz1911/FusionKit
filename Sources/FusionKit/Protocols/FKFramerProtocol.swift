@@ -24,8 +24,7 @@ internal protocol FKFramerProtocol {
     
     /// Parse a protocol conform message frame
     ///
-    /// - Parameters:
-    ///   - data: the data which should be parsed
-    ///   - completion: completion block returns generic Result type with parsed message and possible error
-    func parse(data: DispatchData, _ completion: (Result<FKMessage, Error>) -> Void) -> Void
+    /// - Parameter data: the data which should be parsed
+    /// - Returns: completion block returns generic Result type with parsed message and possible error
+    func parse(data: DispatchData) -> Result<FKMessage, Error>?
 }

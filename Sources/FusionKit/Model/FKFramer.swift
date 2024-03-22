@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal final class FKFramer: @unchecked Sendable {
+internal final class FKFramer: FKFramerProtocol, @unchecked Sendable {
     private var buffer: DispatchData = .empty
     internal func reset() { buffer = .empty }
     
@@ -34,9 +34,8 @@ internal final class FKFramer: @unchecked Sendable {
     
     /// Parse a protocol conform message frame
     ///
-    /// - Parameters:
-    ///   - data: the data which should be parsed
-    ///   - completion: completion block returns generic Result type with parsed message and possible error
+    /// - Parameter data: the data which should be parsed
+    /// - Returns: completion block returns generic Result type with parsed message and possible error
     internal func parse(data: DispatchData) -> Result<FKMessage, Error>? {
         buffer.append(data)
         guard let length = extractSize() else { return nil }
