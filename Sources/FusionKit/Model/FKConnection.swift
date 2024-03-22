@@ -91,13 +91,10 @@ private extension FKConnection {
     /// Process message data and parse it into a conform message
     /// - Parameter data: message data
     private func processing(from data: DispatchData) -> Void {
-        result(.bytes(.init(input: data.count)))
-        framer.parse(data: data) { [weak self] result in
-            guard let self else { return }
-            switch result {
-            case .success(let message): self.result(.message(message))
-            case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
-        }
+        guard let message = framer.parse(data: data) else { return }
+        switch message {
+        case .success(let message): self.result(.message(message))
+        case .failure(let error): stateUpdateHandler(.failed(error)); cleanup() }
     }
     
     /// Clean and cancel connection
@@ -136,7 +133,7 @@ private extension FKConnection {
             connection.receiveDiscontiguous(minimumIncompleteLength: .minimum, maximumLength: .maximum) { [weak self] content, _, isComplete, error in
                 guard let self else { return }
                 if let error { guard error != NWError.posix(.ECANCELED) else { return }; stateUpdateHandler(.failed(error)); cleanup(); return }
-                if let content { processing(from: content) }
+                if let content { result(.bytes(.init(input: content.count))); processing(from: content) }
                 if isComplete { cleanup() } else { discontiguous() }
             }
         }

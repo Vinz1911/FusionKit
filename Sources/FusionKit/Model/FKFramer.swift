@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal final class FKFramer: FKFramerProtocol, @unchecked Sendable {
+internal final class FKFramer: @unchecked Sendable {
     private var buffer: DispatchData = .empty
     internal func reset() { buffer = .empty }
     
@@ -37,20 +37,20 @@ internal final class FKFramer: FKFramerProtocol, @unchecked Sendable {
     /// - Parameters:
     ///   - data: the data which should be parsed
     ///   - completion: completion block returns generic Result type with parsed message and possible error
-    internal func parse(data: DispatchData, _ completion: (Result<FKMessage, Error>) -> Void) -> Void {
+    internal func parse(data: DispatchData) -> Result<FKMessage, Error>? {
         buffer.append(data)
-        guard let length = extractSize() else { return }
-        guard buffer.count <= FKConstants.frame.rawValue else { completion(.failure(FKError.readBufferOverflow)); return }
-        guard buffer.count >= FKConstants.control.rawValue, buffer.count >= length else { return }
+        guard let length = extractSize() else { return nil }
+        guard buffer.count <= FKConstants.frame.rawValue else { return .failure(FKError.readBufferOverflow) }
+        guard buffer.count >= FKConstants.control.rawValue, buffer.count >= length else { return nil }
         while buffer.count >= length && length != .zero {
-            guard let bytes = extractMessage(length: length) else { completion(.failure(FKError.parsingFailed)); return }
+            guard let bytes = extractMessage(length: length) else { return .failure(FKError.parsingFailed) }
             switch buffer.first {
-            case FKOpcodes.binary.rawValue: completion(.success(bytes))
-            case FKOpcodes.ping.rawValue: completion(.success(UInt16(bytes.count)))
-            case FKOpcodes.text.rawValue: guard let result = String(bytes: bytes, encoding: .utf8) else { return }; completion(.success(result))
-            default: completion(.failure(FKError.unexpectedOpcode)) }
+            case FKOpcodes.binary.rawValue: return .success(bytes)
+            case FKOpcodes.ping.rawValue: return .success(UInt16(bytes.count))
+            case FKOpcodes.text.rawValue: if let result = String(bytes: bytes, encoding: .utf8) { return .success(result) }
+            default: return .failure(FKError.unexpectedOpcode) }
             if buffer.count <= length { reset() } else { buffer = buffer.subdata(in: .init(length)..<buffer.count) }
-        }
+        }; return nil
     }
 }
 
