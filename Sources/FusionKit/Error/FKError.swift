@@ -1,5 +1,5 @@
 //
-//  FKConnectionError.swift
+//  FKError.swift
 //  FusionKit
 //
 //  Created by Vinzenz Weist on 07.06.21.
@@ -10,7 +10,7 @@ import Foundation
 
 /// The `FKConnection` specific errors
 @frozen
-public enum FKConnectionError: Error {
+public enum FKError: Error, Sendable {
     case missingHost
     case missingPort
     case connectionTimeout

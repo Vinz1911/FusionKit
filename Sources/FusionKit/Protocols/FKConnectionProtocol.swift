@@ -11,18 +11,18 @@ import Network
 
 public protocol FKConnectionProtocol: Sendable {
     /// The `FKConnectionState` update values
-    var stateUpdateHandler: (FKConnectionState) -> Void { get set }
+    var stateUpdateHandler: (@Sendable (FKState) -> Void) { get set }
     
-    /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
-    /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
-    /// allows to transmit data as fast as possible and allows to measure a Networks's performance.
+    /// The `FKConnection` is a custom network framing protocol and implements the `Fusion Framing Protocol`.
+    /// It's build on top of the `Network` framework standard library. A fast and lightweight Framing Protocol
+    /// allows to transmit data as fast as possible and allows a more fine grained control over the network flow.
     ///
     /// - Parameters:
-    ///   - host: the host name
-    ///   - port: the host port
-    ///   - parameters: network parameters
-    ///   - queue: dispatch queue
-    init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
+    ///   - host: the host name as `String`
+    ///   - port: the host port as `UInt16`
+    ///   - parameters: network framework `NWParameters`
+    ///   - qos: quality of service class `DispatchQoS`
+    init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
     
     /// Start a connection
     func start() -> Void
@@ -32,9 +32,9 @@ public protocol FKConnectionProtocol: Sendable {
     
     /// Send messages to a connected host
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
-    func send<T: FKConnectionMessage>(message: T) -> Void
+    func send<T: FKMessage>(message: T) -> Void
     
     /// Receive a message from a connected host
-    /// - Parameter completion: contains `FKConnectionMessage` and `FKConnectionBytes` generic message typ
-    func receive(_ completion: @escaping (FKConnectionMessage?, FKConnectionBytes?) -> Void) -> Void
+    /// - Parameter completion: contains `FKMessage` and `FKBytes` generic message typ
+    func receive(_ completion: @Sendable @escaping (FKMessage?, FKBytes?) -> Void) -> Void
 }

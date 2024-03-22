@@ -42,6 +42,11 @@ class FusionKitTests: XCTestCase {
         start(test: .ping)
     }
     
+    /// Start test sending and cancel
+    func testCancel() {
+        start(test: .data, cancel: true)
+    }
+    
     /// Start test creating and parsing string based message
     func testParsingStringMessage() {
         let message = uuid
@@ -56,13 +61,13 @@ class FusionKitTests: XCTestCase {
     
     /// Start test error description mapping
     func testErrorDescription() {
-        XCTAssertEqual(FKConnectionError.missingHost.description, "missing host")
-        XCTAssertEqual(FKConnectionError.missingPort.description, "missing port")
-        XCTAssertEqual(FKConnectionError.connectionTimeout.description, "connection timeout")
-        XCTAssertEqual(FKConnectionError.parsingFailed.description, "message parsing failed")
-        XCTAssertEqual(FKConnectionError.readBufferOverflow.description, "read buffer overflow")
-        XCTAssertEqual(FKConnectionError.writeBufferOverflow.description, "write buffer overflow")
-        XCTAssertEqual(FKConnectionError.unexpectedOpcode.description, "unexpected opcode")
+        XCTAssertEqual(FKError.missingHost.description, "missing host")
+        XCTAssertEqual(FKError.missingPort.description, "missing port")
+        XCTAssertEqual(FKError.connectionTimeout.description, "connection timeout")
+        XCTAssertEqual(FKError.parsingFailed.description, "message parsing failed")
+        XCTAssertEqual(FKError.readBufferOverflow.description, "read buffer overflow")
+        XCTAssertEqual(FKError.writeBufferOverflow.description, "write buffer overflow")
+        XCTAssertEqual(FKError.unexpectedOpcode.description, "unexpected opcode")
         
         exp.fulfill()
         wait(for: [exp], timeout: timeout)
@@ -74,10 +79,11 @@ class FusionKitTests: XCTestCase {
 private extension FusionKitTests {
     /// Create a connection and start
     /// - Parameter test: test case
-    private func start(test: TestCase) {
+    private func start(test: TestCase, cancel: Bool = false) {
         stateUpdateHandler(connection: connection, test: test)
         connection.receive { [weak self] message, bytes in
             guard let self else { return }
+            if cancel { connection.cancel() }
             if let message { handleMessages(message: message) }
         }
         connection.start()
@@ -85,25 +91,27 @@ private extension FusionKitTests {
     }
     
     /// Message framer
-    private func framer<T: FKConnectionMessage>(message: T) {
-        let framer = FKConnectionFramer()
+    private func framer<T: FKMessage>(message: T) {
+        let framer = FKFramer()
         let message = framer.create(message: message)
         switch message {
         case .success(let data):
-            framer.parse(data: data) { result in
+            let dispatch = data.withUnsafeBytes { DispatchData(bytes: $0) }
+            framer.parse(data: dispatch) { result in
                 switch result {
                 case .success(let message):
                     if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
                     if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
                 case .failure(let error): XCTFail("failed with error: \(error)") }
             }
+            
         case .failure(let error): XCTFail("failed with error: \(error)") }
         wait(for: [exp], timeout: timeout)
     }
     
     /// Handles test routes for messages
-    /// - Parameter message: generic `FKConnectionMessage`
-    private func handleMessages(message: FKConnectionMessage) {
+    /// - Parameter message: generic `FKMessage`
+    private func handleMessages(message: FKMessage) {
         if case let message as UInt16 = message {
             XCTAssertEqual(message, UInt16(buffer))
             connection.cancel()
@@ -131,7 +139,7 @@ private extension FusionKitTests {
                 if test == .string { connection.send(message: buffer) }
                 if test == .data { connection.send(message: Data(count: Int(buffer)!)) }
                 if test == .ping { connection.send(message: UInt16(buffer)!) }
-            case .cancelled: break
+            case .cancelled: exp.fulfill()
             case .failed(let error):
                 guard let error else { return }
                 XCTFail("failed with error: \(error)") }

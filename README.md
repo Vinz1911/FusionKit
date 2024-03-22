@@ -6,8 +6,8 @@ The `Fusion Framing Protocol (FFP)` is proprietary networking protocol which use
 # Overview
 | Swift Version                                                                                                | License                                                                                                                                              | Coverage                                                                                                                                              |
 |--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|
-| [![Swift 5.8](https://img.shields.io/badge/Swift-5.8-orange.svg?logo=swift&style=flat)](https://swift.org)   | [![License](https://img.shields.io/badge/license-GPLv3-blue.svg?longCache=true&style=flat)](https://github.com/Vinz1911/FusionKit/blob/main/LICENSE) | [![codecov](https://codecov.io/github/Vinz1911/FusionKit/branch/main/graph/badge.svg?token=EE3S0BOINS)](https://codecov.io/github/Vinz1911/FusionKit) |
-| [![Swift 5.8](https://img.shields.io/badge/SPM-Support-orange.svg?logo=swift&style=flat)](https://swift.org) |                                                                                                                                                      |                                                                                                                                                       |
+| [![Swift 5.10](https://img.shields.io/badge/Swift-5.10-orange.svg?logo=swift&style=flat)](https://swift.org)   | [![License](https://img.shields.io/badge/license-GPLv3-blue.svg?longCache=true&style=flat)](https://github.com/Vinz1911/FusionKit/blob/main/LICENSE) | [![codecov](https://codecov.io/github/Vinz1911/FusionKit/branch/main/graph/badge.svg?token=EE3S0BOINS)](https://codecov.io/github/Vinz1911/FusionKit) |
+| [![Swift 5.10](https://img.shields.io/badge/SPM-Support-orange.svg?logo=swift&style=flat)](https://swift.org) |                                                                                                                                                      |                                                                                                                                                       |
 
 ## Installation:
 ### Swift Packages
@@ -17,7 +17,7 @@ The `Fusion Framing Protocol (FFP)` is proprietary networking protocol which use
 // ...
 dependencies: [
     // Dependencies declare other packages that this package depends on.
-    .package(url: "https://github.com/Vinz1911/FusionKit.git", .exact("8.0.0")),
+    .package(url: "https://github.com/Vinz1911/FusionKit.git", from: .init(stringLiteral: "8.0.0")),
 ],
 // ...
 ```
