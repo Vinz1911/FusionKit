@@ -13,16 +13,16 @@ public protocol FKConnectionProtocol: Sendable {
     /// The `FKConnectionState` update values
     var stateUpdateHandler: (@Sendable (FKState) -> Void) { get set }
     
-    /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
-    /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
-    /// allows to transmit data as fast as possible and allows to measure a Networks's performance.
+    /// The `FKConnection` is a custom network framing protocol and implements the `Fusion Framing Protocol`.
+    /// It's build on top of the `Network` framework standard library. A fast and lightweight Framing Protocol
+    /// allows to transmit data as fast as possible and allows a more fine grained control over the network flow.
     ///
     /// - Parameters:
-    ///   - host: the host name
-    ///   - port: the host port
-    ///   - parameters: network parameters
-    ///   - queue: dispatch queue
-    init(host: String, port: UInt16, parameters: NWParameters, queue: DispatchQueue)
+    ///   - host: the host name as `String`
+    ///   - port: the host port as `UInt16`
+    ///   - parameters: network framework `NWParameters`
+    ///   - qos: quality of service class `DispatchQoS`
+    init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
     
     /// Start a connection
     func start() -> Void

@@ -29,6 +29,13 @@ internal extension Timer {
 
 // MARK: - Type Extensions -
 
+internal extension String {
+    /// identifier name
+    static var identifier: Self {
+        return "FusionKit.\(UUID().uuidString)"
+    }
+}
+
 internal extension UInt32 {
     /// Convert integer to data with bigEndian
     var bigEndianBytes: Data { withUnsafeBytes(of: self.bigEndian) { Data($0) } }
@@ -36,10 +43,10 @@ internal extension UInt32 {
 
 internal extension Int {
     /// Minimum size of received bytes
-    static var minimum: Int { 0x1 }
+    static var minimum: Self { 0x1 }
     
     /// Maximum size of received bytes
-    static var maximum: Int { 0x8000 }
+    static var maximum: Self { 0x8000 }
 }
 
 internal extension Data {

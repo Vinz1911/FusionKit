@@ -17,19 +17,19 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     private let framer = FKFramer()
     private let connection: NWConnection
     
-    /// The `FKConnection` is a custom Network protocol implementation of the Fusion Framing Protocol.
-    /// It's build on top of the `Network.framework` provided by Apple. A fast and lightweight Framing Protocol
-    /// allows to transmit data as fast as possible and allows to measure a Networks's performance.
+    /// The `FKConnection` is a custom network framing protocol and implements the `Fusion Framing Protocol`.
+    /// It's build on top of the `Network` framework standard library. A fast and lightweight Framing Protocol
+    /// allows to transmit data as fast as possible and allows a more fine grained control over the network flow.
     ///
     /// - Parameters:
-    ///   - host: the host name
-    ///   - port: the host port
-    ///   - parameters: network parameters
-    ///   - queue: dispatch queue
-    public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, queue: DispatchQueue = .init(label: UUID().uuidString, qos: .userInteractive)) {
+    ///   - host: the host name as `String`
+    ///   - port: the host port as `UInt16`
+    ///   - parameters: network framework `NWParameters`
+    ///   - qos: quality of service class `DispatchQoS`
+    public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, qos: DispatchQoS = .userInteractive) {
         if host.isEmpty { fatalError(FKError.missingHost.description) }; if port == .zero { fatalError(FKError.missingPort.description) }
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
-        self.queue = queue
+        self.queue = DispatchQueue(label: .identifier, qos: qos)
     }
     
     /// Start a connection
