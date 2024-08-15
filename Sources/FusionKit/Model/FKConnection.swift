@@ -32,10 +32,6 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
         self.queue = DispatchQueue(label: .identifier, qos: qos)
     }
     
-    deinit {
-        cancel()
-    }
-    
     /// Start a connection
     public func start() -> Void {
         queue.async { [weak self] in guard let self else { return }
