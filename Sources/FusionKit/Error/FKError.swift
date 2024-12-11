@@ -9,7 +9,6 @@
 import Foundation
 
 /// The `FKConnection` specific errors
-@frozen
 public enum FKError: Error, Sendable {
     case missingHost
     case missingPort

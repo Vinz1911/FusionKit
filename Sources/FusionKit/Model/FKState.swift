@@ -17,7 +17,6 @@ public struct FKBytes: Sendable {
 // MARK: - State Types -
 
 /// The `FKState` state handler
-@frozen
 public enum FKState: Sendable {
     case ready
     case cancelled
@@ -25,7 +24,6 @@ public enum FKState: Sendable {
 }
 
 /// The `FKResult` internal message transmitter
-@frozen
 internal enum FKResult: Sendable {
     case message(FKMessage)
     case bytes(FKBytes)

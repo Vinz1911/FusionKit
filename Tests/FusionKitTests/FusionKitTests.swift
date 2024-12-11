@@ -15,7 +15,7 @@ private enum TestCase {
     case ping
 }
 
-class FusionKitTests: XCTestCase {
+class FusionKitTests: XCTestCase, @unchecked Sendable {
     private var connection = FKConnection(host: "de0.weist.org", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
@@ -84,7 +84,7 @@ private extension FusionKitTests {
         connection.receive { [weak self] message, bytes in
             guard let self else { return }
             if cancel { connection.cancel() }
-            if let message { handleMessages(message: message) }
+            if let message { assertion(message: message) }
         }
         connection.start()
         wait(for: [exp], timeout: timeout)
@@ -94,38 +94,35 @@ private extension FusionKitTests {
     private func framer<T: FKMessage>(message: T) {
         let framer = FKFramer()
         let message = framer.create(message: message)
-        switch message {
-        case .success(let data):
+        
+        if case let .success(data) = message {
             let dispatch = data.withUnsafeBytes { DispatchData(bytes: $0) }
             framer.parse(data: dispatch) { result in
-                switch result {
-                case .success(let message):
+                if case let .success(message) = result {
                     if case let message as String = message { XCTAssertEqual(message, uuid); exp.fulfill() }
                     if case let message as Data = message { XCTAssertEqual(message, uuid.data(using: .utf8)); exp.fulfill() }
-                case .failure(let error): XCTFail("failed with error: \(error)") }
+                }
+                if case let .failure(error) = result { XCTFail("failed with error: \(error)") }
             }
-            
-        case .failure(let error): XCTFail("failed with error: \(error)") }
+        }
+        if case let .failure(error) = message { XCTFail("failed with error: \(error)") }
         wait(for: [exp], timeout: timeout)
     }
     
     /// Handles test routes for messages
     /// - Parameter message: generic `FKMessage`
-    private func handleMessages(message: FKMessage) {
+    private func assertion(message: FKMessage) {
         if case let message as UInt16 = message {
             XCTAssertEqual(message, UInt16(buffer))
-            connection.cancel()
-            exp.fulfill()
+            connection.cancel(); exp.fulfill()
         }
         if case let message as Data = message {
             XCTAssertEqual(message.count, Int(buffer))
-            connection.cancel()
-            exp.fulfill()
+            connection.cancel(); exp.fulfill()
         }
         if case let message as String = message {
             XCTAssertEqual(message, buffer)
-            connection.cancel()
-            exp.fulfill()
+            connection.cancel(); exp.fulfill()
         }
     }
     
@@ -134,15 +131,13 @@ private extension FusionKitTests {
     private func stateUpdateHandler(connection: FKConnection, test: TestCase) {
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
-            switch state {
-            case .ready:
+            if case .ready = state {
                 if test == .string { connection.send(message: buffer) }
                 if test == .data { connection.send(message: Data(count: Int(buffer)!)) }
                 if test == .ping { connection.send(message: UInt16(buffer)!) }
-            case .cancelled: exp.fulfill()
-            case .failed(let error):
-                guard let error else { return }
-                XCTFail("failed with error: \(error)") }
+            }
+            if case .cancelled = state { exp.fulfill() }
+            if case let .failed(error) = state { guard let error else { return }; XCTFail("failed with error: \(error)") }
         }
     }
 }
