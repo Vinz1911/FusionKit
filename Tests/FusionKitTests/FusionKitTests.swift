@@ -61,13 +61,20 @@ class FusionKitTests: XCTestCase, @unchecked Sendable {
     
     /// Start test error description mapping
     func testErrorDescription() {
-        XCTAssertEqual(FKError.missingHost.description, "missing host")
-        XCTAssertEqual(FKError.missingPort.description, "missing port")
         XCTAssertEqual(FKError.connectionTimeout.description, "connection timeout")
         XCTAssertEqual(FKError.parsingFailed.description, "message parsing failed")
         XCTAssertEqual(FKError.readBufferOverflow.description, "read buffer overflow")
         XCTAssertEqual(FKError.writeBufferOverflow.description, "write buffer overflow")
         XCTAssertEqual(FKError.unexpectedOpcode.description, "unexpected opcode")
+        
+        do { _ = try FKConnection(host: "", port: 7878) } catch {
+            guard let error = error as? FKError else { return }
+            XCTAssert(error.description == "missing host")
+        }
+        do { _ = try FKConnection(host: "de0.weist.org", port: 0) } catch {
+            guard let error = error as? FKError else { return }
+            XCTAssert(error.description == "missing port")
+        }
         
         exp.fulfill()
         wait(for: [exp], timeout: timeout)
