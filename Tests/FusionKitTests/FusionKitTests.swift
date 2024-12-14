@@ -16,7 +16,7 @@ private enum TestCase {
 }
 
 class FusionKitTests: XCTestCase, @unchecked Sendable {
-    private var connection = FKConnection(host: "de0.weist.org", port: 7878)
+    private var connection = try? FKConnection(host: "de0.weist.org", port: 7878)
     private var buffer = "50000"
     private let timeout = 10.0
     private let uuid = UUID().uuidString
@@ -80,6 +80,7 @@ private extension FusionKitTests {
     /// Create a connection and start
     /// - Parameter test: test case
     private func start(test: TestCase, cancel: Bool = false) {
+        guard let connection else { return }
         stateUpdateHandler(connection: connection, test: test)
         connection.receive { [weak self] message, bytes in
             guard let self else { return }
@@ -112,6 +113,7 @@ private extension FusionKitTests {
     /// Handles test routes for messages
     /// - Parameter message: generic `FKMessage`
     private func assertion(message: FKMessage) {
+        guard let connection else { return }
         if case let message as UInt16 = message {
             XCTAssertEqual(message, UInt16(buffer))
             connection.cancel(); exp.fulfill()

@@ -22,8 +22,7 @@ internal extension Timer {
         let dispatchTimer = DispatchSource.makeTimerSource(flags: .strict, queue: queue)
         dispatchTimer.setEventHandler(handler: completion)
         dispatchTimer.schedule(deadline: .now() + after, repeating: .never, leeway: .nanoseconds(.zero))
-        dispatchTimer.resume()
-        return dispatchTimer
+        dispatchTimer.resume(); return dispatchTimer
     }
 }
 
