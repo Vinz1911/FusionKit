@@ -26,8 +26,8 @@ public final class FKConnection: FKConnectionProtocol, @unchecked Sendable {
     ///   - port: the host port as `UInt16`
     ///   - parameters: network framework `NWParameters`
     ///   - qos: quality of service class `DispatchQoS`
-    public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, qos: DispatchQoS = .userInteractive) {
-        if host.isEmpty { fatalError(FKError.missingHost.description) }; if port == .zero { fatalError(FKError.missingPort.description) }
+    public required init(host: String, port: UInt16, parameters: NWParameters = .tcp, qos: DispatchQoS = .userInteractive) throws {
+        if host.isEmpty { throw(FKError.missingHost) }; if port == .zero { throw(FKError.missingPort) }
         self.connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(integerLiteral: port), using: parameters)
         self.queue = DispatchQueue(label: .identifier, qos: qos)
     }

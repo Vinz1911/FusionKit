@@ -8,7 +8,7 @@
 
 import Foundation
 
-internal protocol FKFramerProtocol {
+internal protocol FKFramerProtocol: Sendable {
     /// The `FKFramer` represents the fusion framing protocol.
     /// This is a very fast and lightweight message framing protocol that supports `String` and `Data` based messages.
     /// It also supports `UInt16` for ping based transfer responses.

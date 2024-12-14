@@ -22,7 +22,7 @@ public protocol FKConnectionProtocol: Sendable {
     ///   - port: the host port as `UInt16`
     ///   - parameters: network framework `NWParameters`
     ///   - qos: quality of service class `DispatchQoS`
-    init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS)
+    init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS) throws
     
     /// Start a connection
     func start() -> Void
