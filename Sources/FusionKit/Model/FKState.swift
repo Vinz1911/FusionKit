@@ -17,6 +17,7 @@ public struct FKBytes: Sendable {
 // MARK: - State Types -
 
 /// The `FKState` state handler
+@frozen
 public enum FKState: Sendable {
     case ready
     case cancelled
