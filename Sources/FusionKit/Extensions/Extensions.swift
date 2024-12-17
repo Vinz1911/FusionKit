@@ -12,7 +12,7 @@ import Network
 // MARK: - Timer -
 
 internal extension Timer {
-    /// Create a timeout
+    /// Create a timeout timer
     ///
     /// - Parameters:
     ///   - after: executed after given time

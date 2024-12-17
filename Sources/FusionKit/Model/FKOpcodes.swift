@@ -8,7 +8,7 @@
 
 import Foundation
 
-/// Opcodes for framing
+/// `FKOpcodes` contains operational codes for the `FKFramer`
 internal enum FKOpcodes: UInt8, Sendable {
     case none = 0x0
     case text = 0x1
@@ -16,7 +16,7 @@ internal enum FKOpcodes: UInt8, Sendable {
     case ping = 0x3
 }
 
-/// Protocol byte constants
+/// `FKConstants` contains constans for the `FKFramer`
 internal enum FKConstants: Int, Sendable {
     case opcode = 0x1
     case control = 0x5

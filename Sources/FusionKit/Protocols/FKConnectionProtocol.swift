@@ -25,16 +25,22 @@ public protocol FKConnectionProtocol: Sendable {
     init(host: String, port: UInt16, parameters: NWParameters, qos: DispatchQoS) throws
     
     /// Start a connection
+    ///
+    /// - Returns: non returning
     func start() -> Void
     
     /// Cancel the current connection
+    ///
+    /// - Returns: non returning
     func cancel() -> Void
     
     /// Send messages to a connected host
+    ///
     /// - Parameter message: generic type send `String`, `Data` and `UInt16` based messages
     func send<T: FKMessage>(message: T) -> Void
     
     /// Receive a message from a connected host
+    /// 
     /// - Parameter completion: contains `FKMessage` and `FKBytes` generic message typ
     func receive(_ completion: @Sendable @escaping (FKMessage?, FKBytes?) -> Void) -> Void
 }

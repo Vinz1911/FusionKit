@@ -59,6 +59,7 @@ internal final class FKFramer: FKFramerProtocol, @unchecked Sendable {
 private extension FKFramer {
     /// Extract the message frame size from the data,
     /// if not possible it returns nil
+    ///
     /// - Returns: the size as `UInt32`
     private func extractSize() -> UInt32? {
         guard buffer.count >= FKConstants.control.rawValue else { return nil }
@@ -68,6 +69,7 @@ private extension FKFramer {
     
     /// Extract the message and remove the overhead,
     /// if not possible it returns nil
+    /// 
     /// - Parameter length: the length of the extracting message
     /// - Returns: the extracted message as `Data`
     private func extractMessage(length: UInt32) -> Data? {
